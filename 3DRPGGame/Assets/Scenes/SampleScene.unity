@@ -697,8 +697,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f923bf96848b1c429b5a3266b73dee3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  _animator: {fileID: 0}
+  _characterController: {fileID: 0}
+  speed: 3
   runSpeed: 10
+  rollSpeed: 8
   finalSpeed: 0
   isRunning: 0
   toggleCameraRotation: 0

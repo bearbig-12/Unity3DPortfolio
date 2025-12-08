@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    Animator _animator;
+    public Animator _animator;
     Camera _camera;
-    CharacterController _characterController;
+    public CharacterController _characterController;
 
-    public float speed = 5.0f;
+    public float speed = 3.0f;
     public float runSpeed = 10.0f;
+    public float rollSpeed = 8.0f;
+
     public float finalSpeed;
     public bool isRunning;
 
@@ -17,18 +19,36 @@ public class PlayerMovement : MonoBehaviour
     public bool toggleCameraRotation;
     public float smoothness = 10f;
 
+    public Vector2 MoveInput { get; private set; }
+
+    // State
+    public StateMachine StateMachine { get; private set; }
+    public PlayerIdleState IdleState { get; private set; }
+    public PlayerWalkState WalkState { get; private set; }
+    public PlayerRunState RunState { get; private set; }
+    public PlayerRollState RollState { get; private set; }
+
     // Start is called before the first frame update
     void Start()
     {
         _animator = GetComponent<Animator>();
         _camera = Camera.main;
         _characterController = this.GetComponent<CharacterController>();
+
+        StateMachine = new StateMachine();
+        IdleState = new PlayerIdleState(this);
+        WalkState = new PlayerWalkState(this);
+        RunState = new PlayerRunState(this);
+        RollState = new PlayerRollState(this);  
+
+        StateMachine.ChangeState(IdleState);
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKey(KeyCode.LeftAlt))
+        // 카메라 회전 토글 
+        if (Input.GetKey(KeyCode.LeftAlt))
         {
             toggleCameraRotation = true;
         }
@@ -37,15 +57,26 @@ public class PlayerMovement : MonoBehaviour
             toggleCameraRotation = false;
         }
 
-        if(Input.GetKey(KeyCode.LeftShift))
+        // 달리기
+        isRunning = Input.GetKey(KeyCode.LeftShift);
+
+        // 이동 입력 축 저장 (WASD/패드 등)
+        float h = Input.GetAxis("Horizontal");
+        float v = Input.GetAxis("Vertical");
+        MoveInput = new Vector2(h, v);
+
+    
+   
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            isRunning = true;
+            StateMachine.ChangeState(RollState);
         }
-        else
-        {
-            isRunning = false;
-        }
-        InputMovement();
+     
+
+
+
+        StateMachine.Update();
+
     }
     void LateUpdate()
     {
@@ -57,18 +88,44 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    void InputMovement()
+    public void Move(float moveSpeed)
     {
-        finalSpeed = isRunning ? runSpeed : speed;
 
-        Vector3 forword = transform.TransformDirection(Vector3.forward);
+        // 월드 기준 전/우 방향
+        Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
 
-        Vector3 moveDirection = forword * Input.GetAxis("Vertical") + right * Input.GetAxis("Horizontal");
+        Vector3 moveDirection = forward * MoveInput.y + right * MoveInput.x;
 
-        _characterController.Move(moveDirection.normalized * finalSpeed * Time.deltaTime);
+        // CharacterController로 실제 이동
+        _characterController.Move(moveDirection.normalized * moveSpeed * Time.deltaTime);
 
-        float percent = (isRunning ? 1.0f : 0.5f) * moveDirection.magnitude;
-        _animator.SetFloat("Blend", percent, 0.1f, Time.deltaTime);
+        //// 애니메이션 블렌드 값 계산 (Idle/Walk/Run에서 다르게 사용 가능)
+        //float percent = (isRunning ? 1.0f : 0.5f) * moveDirection.magnitude;
+        //_animator.SetFloat("Blend", percent, 0.1f, Time.deltaTime);
+
+        // 애니메이션 파라미터 설정
+        float speedMul = isRunning ? 1.0f : 0.5f;
+
+        // MoveInput.x = 좌우, MoveInput.y = 앞뒤
+        float animX = MoveInput.x * speedMul;
+        float animY = MoveInput.y * speedMul;
+
+        _animator.SetFloat("MoveX", animX, 0.1f, Time.deltaTime);
+        _animator.SetFloat("MoveY", animY, 0.1f, Time.deltaTime);
+
+    }
+
+
+    public void SetIdleAnim()
+    {
+        _animator.SetFloat("MoveX", 0f, 0.1f, Time.deltaTime);
+        _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
+    }
+
+    // 현재 입력이 있는지 여부 (Idle → Walk/Run 전환에 사용)
+    public bool HasMoveInput()
+    {
+        return MoveInput.sqrMagnitude > 0.01f;
     }
 }
