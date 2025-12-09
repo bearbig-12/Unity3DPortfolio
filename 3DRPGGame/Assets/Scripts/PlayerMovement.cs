@@ -19,6 +19,8 @@ public class PlayerMovement : MonoBehaviour
     public bool toggleCameraRotation;
     public float smoothness = 10f;
 
+    public bool isAttacking = false;
+
     public Vector2 MoveInput { get; private set; }
 
     // State
@@ -27,6 +29,9 @@ public class PlayerMovement : MonoBehaviour
     public PlayerWalkState WalkState { get; private set; }
     public PlayerRunState RunState { get; private set; }
     public PlayerRollState RollState { get; private set; }
+    public PlayerAttack1State Attack1State { get; private set; }
+    public PlayerAttack2State Attack2State { get; private set; }
+    public PlayerAttack3State Attack3State { get; private set; }
 
     // Start is called before the first frame update
     void Start()
@@ -40,6 +45,9 @@ public class PlayerMovement : MonoBehaviour
         WalkState = new PlayerWalkState(this);
         RunState = new PlayerRunState(this);
         RollState = new PlayerRollState(this);  
+        Attack1State = new PlayerAttack1State(this);
+        Attack2State = new PlayerAttack2State(this);
+        Attack3State = new PlayerAttack3State(this);
 
         StateMachine.ChangeState(IdleState);
     }
@@ -71,7 +79,18 @@ public class PlayerMovement : MonoBehaviour
         {
             StateMachine.ChangeState(RollState);
         }
-     
+        else if(Input.GetMouseButtonDown(0))
+        {
+            var currentState = StateMachine.GetState();
+            // 공격 중이 아닐때만 공격1로 전환, 공격 중이면 콤보로 넘어감
+            if(!(currentState == Attack1State) && !(currentState == Attack2State) && !(currentState == Attack3State))
+            {
+                StateMachine.ChangeState(Attack1State);
+            }
+        
+        }
+      
+
 
 
 
@@ -127,5 +146,19 @@ public class PlayerMovement : MonoBehaviour
     public bool HasMoveInput()
     {
         return MoveInput.sqrMagnitude > 0.01f;
+    }
+
+    // 공격 중에는 이동 못하게 설정
+    public void SetAttacking(bool value)
+    {
+        isAttacking = value;
+
+        if (value)
+        {
+            // 공격 시작할 때 입력/애니 값 잠깐 0으로
+            MoveInput = Vector2.zero;
+            _animator.SetFloat("MoveX", 0f, 0.1f, Time.deltaTime);
+            _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
+        }
     }
 }

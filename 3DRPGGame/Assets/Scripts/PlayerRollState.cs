@@ -4,7 +4,7 @@ public class PlayerRollState : State
 {
     private PlayerMovement _player;
 
-    private float _rollTime = 0.6f;    // 구르기 지속 시간 (애니 길이에 맞춰 수정 가능)
+    private float _rollTime = 1.15f;    // 구르기 지속 시간 (애니 길이에 맞춰 수정 가능)
     private float _elapsed = 0f;
     private Vector3 _rollDir;
 
