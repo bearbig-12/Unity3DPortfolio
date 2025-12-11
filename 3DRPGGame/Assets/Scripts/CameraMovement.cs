@@ -21,6 +21,56 @@ public class CameraMovement : MonoBehaviour
     public float finalDistance;
     public float smoothness = 10f;
 
+    [Header("Lock On")]
+    public float lockOnRadius = 15f;
+    public LayerMask lockOnLayer;
+    private Transform lockOnTarget;
+    public bool IsLockOn
+    {
+        get
+        {
+            if(lockOnTarget != null)
+            {
+                return true;
+            }
+            else
+            {
+                 return false;
+
+            }
+        }
+        
+    }
+
+
+    public void ToggleLockOn(Transform player)
+    {
+        if(IsLockOn)
+        {
+            //락온 해제
+            lockOnTarget = null;
+            return;
+        }
+
+        Collider[] hits = Physics.OverlapSphere(player.position, lockOnRadius, lockOnLayer);
+
+        if(hits.Length > 0)
+        {
+            //가장 가까운 적 찾기
+            float closestDistance = Mathf.Infinity;
+
+            foreach(var hit in hits)
+            {
+                float distance = Vector3.Distance(player.position, hit.transform.position);
+                if(distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    lockOnTarget = hit.transform;
+                }
+            }
+        }
+    }
+
 
     // Start is called before the first frame update
     void Start()
@@ -40,13 +90,31 @@ public class CameraMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        rotX += -Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
-        rotY += Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
+        if (!IsLockOn)
+        {
+            rotX += -Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
+            rotY += Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
 
-        rotX = Mathf.Clamp(rotX, -clampAngle, clampAngle);
+            rotX = Mathf.Clamp(rotX, -clampAngle, clampAngle);
 
-        Quaternion rot = Quaternion.Euler(rotX, rotY, 0);
-        transform.rotation = rot;
+            Quaternion rot = Quaternion.Euler(rotX, rotY, 0);
+            transform.rotation = rot;
+        }
+        else if(lockOnTarget != null)
+        {
+            Vector3 dir = lockOnTarget.position - transform.position;
+            dir.y = 0; // 수직 회전 방지
+
+            if ((dir.sqrMagnitude > 0.001f))
+            {
+                Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot,  followSpeed * Time.deltaTime);
+
+                Vector3 euler = transform.rotation.eulerAngles;
+                rotX = Mathf.Clamp(euler.x, -clampAngle, clampAngle);
+                rotY = euler.y;
+            }
+        }
 
     }
 
@@ -68,5 +136,13 @@ public class CameraMovement : MonoBehaviour
             finalDistance = maxDistance;
         }
         realCamera.localPosition = Vector3.Lerp(realCamera.localPosition, dirNormalized * finalDistance, Time.deltaTime * smoothness);
+    }
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+
+        Vector3 center = (objectToFollow != null) ? objectToFollow.position : transform.position;
+        Gizmos.DrawWireSphere(center, lockOnRadius);
     }
 }

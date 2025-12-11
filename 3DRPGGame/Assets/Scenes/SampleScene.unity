@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 400390880}
   - component: {fileID: 400390879}
   - component: {fileID: 400390878}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -498,6 +498,10 @@ MonoBehaviour:
   maxDistance: 2
   finalDistance: 0
   smoothness: 10
+  lockOnRadius: 15
+  lockOnLayer:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!4 &941069208
 Transform:
   m_ObjectHideFlags: 0
@@ -706,6 +710,7 @@ MonoBehaviour:
   isRunning: 0
   toggleCameraRotation: 0
   smoothness: 10
+  isAttacking: 0
 --- !u!95 &2027857357
 Animator:
   serializedVersion: 5

@@ -7,6 +7,8 @@ public class PlayerMovement : MonoBehaviour
     public Animator _animator;
     Camera _camera;
     public CharacterController _characterController;
+    CameraMovement _cam;
+
 
     public float speed = 3.0f;
     public float runSpeed = 10.0f;
@@ -39,6 +41,7 @@ public class PlayerMovement : MonoBehaviour
         _animator = GetComponent<Animator>();
         _camera = Camera.main;
         _characterController = this.GetComponent<CharacterController>();
+        _cam = FindObjectOfType<CameraMovement>();
 
         StateMachine = new StateMachine();
         IdleState = new PlayerIdleState(this);
@@ -63,6 +66,11 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             toggleCameraRotation = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _cam.ToggleLockOn(transform); 
         }
 
         // ´Þ¸®±â
