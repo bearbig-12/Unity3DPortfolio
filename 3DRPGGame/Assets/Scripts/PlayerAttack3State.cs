@@ -20,6 +20,9 @@ public class PlayerAttack3State : State
         Debug.Log("Entered Attack3 State");
         _player.SetAttacking(true);
 
+        _player.ChangeStamina(-10);
+
+
         _player._animator.SetTrigger("Attack03");
         // 구르는 동안 이동  파라미터를 0으로 잠궈준다
         _player._animator.SetFloat("MoveX", 0f);
@@ -29,8 +32,9 @@ public class PlayerAttack3State : State
     public void Execute()
     {
         AnimatorStateInfo info = _player._animator.GetCurrentAnimatorStateInfo(0);
-        if ( info.normalizedTime >= 0.8f)
+        if ( info.normalizedTime >= 1f)
         {
+            _player._attackTimer = _player._attackDelay;
             // 공격 끝나면 대기 상태로 복귀
             if (_player.HasMoveInput())
             {

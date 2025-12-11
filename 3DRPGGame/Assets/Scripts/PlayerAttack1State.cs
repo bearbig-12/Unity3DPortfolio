@@ -20,6 +20,8 @@ public class PlayerAttack1State : State
         Debug.Log("Entered Attack1 State");
         _player.SetAttacking(true);
 
+        _player.ChangeStamina(-10);
+
         _player._animator.SetTrigger("Attack01");
         // 구르는 동안 이동  파라미터를 0으로 잠궈준다
         _player._animator.SetFloat("MoveX", 0f);

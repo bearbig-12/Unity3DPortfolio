@@ -22,8 +22,23 @@ public class PlayerMovement : MonoBehaviour
     public float smoothness = 10f;
 
     public bool isAttacking = false;
+    public float _attackDelay = 0.3f;
+    public float _attackTimer = 0.0f;
 
     public Vector2 MoveInput { get; private set; }
+
+    [Header("PlayerInfo")]
+    public int _maxHealth = 100;
+    public int _currentHealth;
+    public HealthBar _healthbar;
+
+    [Header("Stamina Info")]
+    public int _maxStamina = 100;
+    public int _currentStamina;
+    public StaminaBar _staminaBar;
+
+    float staminaTick = 1.0f;      // 1초마다 회복/감소
+    float staminaTimer = 0.0f;
 
     // State
     public StateMachine StateMachine { get; private set; }
@@ -35,6 +50,8 @@ public class PlayerMovement : MonoBehaviour
     public PlayerAttack2State Attack2State { get; private set; }
     public PlayerAttack3State Attack3State { get; private set; }
 
+
+
     // Start is called before the first frame update
     void Start()
     {
@@ -42,6 +59,12 @@ public class PlayerMovement : MonoBehaviour
         _camera = Camera.main;
         _characterController = this.GetComponent<CharacterController>();
         _cam = FindObjectOfType<CameraMovement>();
+
+        _currentHealth = _maxHealth;
+        _healthbar.SetMaxHealth(_maxHealth);
+
+        _currentStamina = _maxStamina;
+        _staminaBar.SetMaxStamina(_maxStamina);
 
         StateMachine = new StateMachine();
         IdleState = new PlayerIdleState(this);
@@ -74,33 +97,74 @@ public class PlayerMovement : MonoBehaviour
         }
 
         // 달리기
-        isRunning = Input.GetKey(KeyCode.LeftShift);
+        bool canRun = _currentStamina > 0;
+        if ((canRun))
+        {
+            isRunning = Input.GetKey(KeyCode.LeftShift);
+        }
+        else
+        {
+            isRunning = false;
+        }
+
 
         // 이동 입력 축 저장 (WASD/패드 등)
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         MoveInput = new Vector2(h, v);
 
-    
+        if(_attackTimer > 0)
+        {
+            _attackTimer -= Time.deltaTime;
+        }
    
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            StateMachine.ChangeState(RollState);
+            if(_currentStamina >= 15)
+            {
+                StateMachine.ChangeState(RollState);
+
+            }
         }
         else if(Input.GetMouseButtonDown(0))
         {
             var currentState = StateMachine.GetState();
             // 공격 중이 아닐때만 공격1로 전환, 공격 중이면 콤보로 넘어감
-            if(!(currentState == Attack1State) && !(currentState == Attack2State) && !(currentState == Attack3State))
+            if(_currentStamina > 0 && 
+                _attackTimer <= 0 &&
+                !(currentState == Attack1State) && 
+                !(currentState == Attack2State) && 
+                !(currentState == Attack3State))
             {
                 StateMachine.ChangeState(Attack1State);
             }
         
         }
       
+    
+        staminaTimer += Time.deltaTime;
 
+        if (staminaTimer >= staminaTick)
+        {
+            staminaTimer = 0f;
 
+            bool isRolling = StateMachine.GetState() == RollState;
 
+            if (isRunning && HasMoveInput() && _currentStamina > 0)
+            {
+                ChangeStamina(-5);
+            }
+            // 움직이지 않거나 걷기일 때 스태미나 회복
+            else if (!isRunning && !isAttacking && !isRolling && _currentStamina < _maxStamina)
+            {
+                ChangeStamina(+5);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            TakeDamage(10);
+        }
 
         StateMachine.Update();
 
@@ -168,5 +232,23 @@ public class PlayerMovement : MonoBehaviour
             _animator.SetFloat("MoveX", 0f, 0.1f, Time.deltaTime);
             _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
         }
+    }
+
+    void TakeDamage(int damage)
+    {
+        _currentHealth -= damage;
+        _healthbar.SetHealth(_currentHealth);
+    }
+
+    public void ChangeStamina(int amount)
+    {
+        _currentStamina += amount;
+
+        if (_currentStamina < 0)
+            _currentStamina = 0;
+        if (_currentStamina > _maxStamina)
+            _currentStamina = _maxStamina;
+
+        _staminaBar.SetStamina(_currentStamina);
     }
 }

@@ -19,6 +19,12 @@ public class PlayerRunState : State
 
     public  void Execute()
     {
+        if(_player._currentStamina <= 0)
+        {
+            _player.isRunning = false;
+            _player.StateMachine.ChangeState(_player.WalkState);
+            return;
+        }
         if(!_player.HasMoveInput())
         {
             _player.StateMachine.ChangeState(_player.IdleState);

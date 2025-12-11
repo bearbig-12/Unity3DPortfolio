@@ -18,6 +18,9 @@ public class PlayerRollState : State
         Debug.Log("Entered Roll State");
         _elapsed = 0f;
 
+        _player.ChangeStamina(-15);
+
+
         // 구르는 방향 결정 (입력 있으면 그 방향, 없으면 정면)
         if (_player.HasMoveInput())
         {
