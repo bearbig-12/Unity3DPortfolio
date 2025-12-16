@@ -46,7 +46,7 @@ public class EnemyPatrolState : State
         }
     }
 
-    void Exit()
+    public void Exit()
     {
         // Debug.Log("Exited Patrol State");
     }

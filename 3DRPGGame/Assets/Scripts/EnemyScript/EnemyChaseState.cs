@@ -41,6 +41,6 @@ public class EnemyChaseState : State
 
     public void Exit()
     {
-        // Debug.Log("Exited Chase State");
+        Debug.Log("Exited Chase State");
     }
 }

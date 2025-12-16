@@ -40,6 +40,15 @@ public class PlayerMovement : MonoBehaviour
     float staminaTick = 1.0f;      // 1초마다 회복/감소
     float staminaTimer = 0.0f;
 
+    [Header("Weapon Info")]
+    public Transform weaponRoot;// 무기 시작 위치
+    public Transform weaponTip; // 무기 끝 위치
+    public float bladeRadius = 0.12f; // 칼 두께
+    public LayerMask enemyLayer;
+    public int attackDamage = 20;
+    // 공격 한번에 데미지 한번 플래그
+    private bool _hitSwing = false;
+
     // State
     public StateMachine StateMachine { get; private set; }
     public PlayerIdleState IdleState { get; private set; }
@@ -250,5 +259,56 @@ public class PlayerMovement : MonoBehaviour
             _currentStamina = _maxStamina;
 
         _staminaBar.SetStamina(_currentStamina);
+    }
+    public void AnimEvent_AttackStart()
+    {
+        _hitSwing = false;
+    }
+    public void AnimEvent_AttackHit()
+    {
+        if (_hitSwing) return;
+        _hitSwing = true;
+
+        if (weaponRoot == null || weaponTip == null)
+            return;
+
+        Vector3 start = weaponRoot.position;
+        Vector3 end = weaponTip.position;
+
+        Vector3 dir = (end - start).normalized;
+        float distance = Vector3.Distance(start, end);
+
+        RaycastHit[] hits = Physics.SphereCastAll(
+            start,
+            bladeRadius,
+            dir,
+            distance,
+            enemyLayer
+        );
+
+        foreach (var hit in hits)
+        {
+            EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
+            if (enemy != null)
+            {
+                enemy.TakeDamage(attackDamage);
+            }
+        }
+    }
+
+    // 공격 끝 프레임 (선택)
+    public void AnimEvent_AttackEnd()
+    {
+        _hitSwing = false;
+    }
+
+
+    void OnDrawGizmosSelected()
+    {
+        if (weaponRoot == null || weaponTip == null) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(weaponRoot.position, weaponTip.position);
+        Gizmos.DrawWireSphere(weaponTip.position, bladeRadius);
     }
 }
