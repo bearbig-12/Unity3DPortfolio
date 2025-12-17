@@ -22,16 +22,16 @@ public class EnemyChaseState : State
 
     public void Execute()
     {
-        if (_enemy.GetDistanceToPlayer() > _enemy.returnRange)
-        {
-            _enemy.StateMachine.ChangeState(_enemy.ReturnState);
-            return;
-        }
-        if (!_enemy.IsPlayerOnSight())
-        {
-            _enemy.StateMachine.ChangeState(_enemy.PatrolState);
-            return;
-        }
+        //if (_enemy.GetDistanceToPlayer() > _enemy.returnRange)
+        //{
+        //    _enemy.StateMachine.ChangeState(_enemy.ReturnState);
+        //    return;
+        //}
+        //if (!_enemy.IsPlayerOnSight())
+        //{
+        //    _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+        //    return;
+        //}
         // 플레이어 위치로 계속 이동
         if(_enemy._player != null)
         {

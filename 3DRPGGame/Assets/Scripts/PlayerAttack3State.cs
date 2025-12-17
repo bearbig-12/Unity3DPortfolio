@@ -7,8 +7,7 @@ public class PlayerAttack3State : State
     private PlayerMovement _player;
     private bool _isNextAttackQueued = false;
 
-    private float comboStart = 0.2f;
-    private float comboEnd = 0.7f;
+
 
     public PlayerAttack3State(PlayerMovement player)
     {

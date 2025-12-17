@@ -24,6 +24,8 @@ public class PlayerMovement : MonoBehaviour
     public bool isAttacking = false;
     public float _attackDelay = 0.3f;
     public float _attackTimer = 0.0f;
+    private bool _attackActive = false;
+    private HashSet<EnemyAI> _enemiesHit = new HashSet<EnemyAI>();
 
     public Vector2 MoveInput { get; private set; }
 
@@ -46,8 +48,6 @@ public class PlayerMovement : MonoBehaviour
     public float bladeRadius = 0.12f; // 칼 두께
     public LayerMask enemyLayer;
     public int attackDamage = 20;
-    // 공격 한번에 데미지 한번 플래그
-    private bool _hitSwing = false;
 
     // State
     public StateMachine StateMachine { get; private set; }
@@ -186,6 +186,11 @@ public class PlayerMovement : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(playerRotate), Time.deltaTime * smoothness);
 
         }
+
+        if(_attackActive)
+        {
+            WeaponHitCheck();
+        }
     }
 
     public void Move(float moveSpeed)
@@ -262,44 +267,53 @@ public class PlayerMovement : MonoBehaviour
     }
     public void AnimEvent_AttackStart()
     {
-        _hitSwing = false;
+        _attackActive = true;
+        _enemiesHit.Clear();     // 같은 공격에서 중복 히트 방지
     }
-    public void AnimEvent_AttackHit()
+    public void WeaponHitCheck()
     {
-        if (_hitSwing) return;
-        _hitSwing = true;
-
-        if (weaponRoot == null || weaponTip == null)
+        if(weaponRoot == null || weaponTip == null)
+        {
             return;
+        }
 
         Vector3 start = weaponRoot.position;
         Vector3 end = weaponTip.position;
 
-        Vector3 dir = (end - start).normalized;
+        Vector3 direction = (end - start).normalized;
         float distance = Vector3.Distance(start, end);
 
-        RaycastHit[] hits = Physics.SphereCastAll(
-            start,
-            bladeRadius,
-            dir,
-            distance,
-            enemyLayer
-        );
 
-        foreach (var hit in hits)
+        RaycastHit[] hits = Physics.SphereCastAll(start, bladeRadius, direction, distance, enemyLayer);
+        foreach (var h in hits)
         {
-            EnemyAI enemy = hit.collider.GetComponentInParent<EnemyAI>();
-            if (enemy != null)
+            var enemy = h.collider.GetComponentInParent<EnemyAI>();
+            if (enemy == null)
             {
+                continue;
+            }
+
+            // 이번 공격에서 처음 맞는 적만
+            if (_enemiesHit.Add(enemy))
+            {
+                Debug.Log("Hit Enemy: " + enemy.name);
                 enemy.TakeDamage(attackDamage);
             }
         }
+        //foreach (var hit in hits)
+        //{
+        //    if (hit.collider.CompareTag("Enemy"))
+        //    {
+        //        Debug.Log("Enemy Hit!! : " + hit.collider.name);
+        //    }
+        //}
     }
 
     // 공격 끝 프레임 (선택)
     public void AnimEvent_AttackEnd()
     {
-        _hitSwing = false;
+        _attackActive = false;
+        _enemiesHit.Clear();
     }
 
 

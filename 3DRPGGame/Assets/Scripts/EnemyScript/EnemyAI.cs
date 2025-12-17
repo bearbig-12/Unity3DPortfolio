@@ -209,6 +209,12 @@ public class EnemyAI : MonoBehaviour
         healthBar.SetHealth(currentHealth);
     }
 
+
+
+    
+
+
+
     void OnDrawGizmos()
     {
         // alertRange (Idle -> Patrol)
