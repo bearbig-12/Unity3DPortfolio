@@ -13,7 +13,7 @@ public class PlayerRunState : State
 
     public  void Enter()
     {
-        Debug.Log("Entered Run State");
+        //Debug.Log("Entered Run State");
         _player.finalSpeed = _player.runSpeed;
     }
 
@@ -39,6 +39,6 @@ public class PlayerRunState : State
     }
     public  void Exit()
     {
-        Debug.Log("Exited Run State");
+       // Debug.Log("Exited Run State");
     }
 }

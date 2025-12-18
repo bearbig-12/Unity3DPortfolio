@@ -22,14 +22,14 @@ public class EnemyAI : MonoBehaviour
     public float alertRange = 10f; // Idle -> Patrol용 거리
     public float fovRange = 10f; // Patrol -> Chase용 거리
     public float fovAngle = 90f; // Enemy의 시야각
-    public float attackRange = 3f; // Chase -> Attack (공격 유효거리)
+    public float attackRange = 2f; // Chase -> Attack (공격 유효거리)
     public float chaseBreakRange = 20f; // Chase -> Patrol 거리
     public float returnRange = 30f; // patrol -> Idle
 
     [Header("Speeds")]
     public float idleSpeed = 0f;
-    public float patrolSpeed = 4f;
-    public float chaseSpeed = 11f;
+    public float patrolSpeed = 3f;
+    public float chaseSpeed = 6f;
 
 
     [Header("Patrol")]
@@ -39,7 +39,7 @@ public class EnemyAI : MonoBehaviour
 
 
     [Header("Attack")]
-    public float attackCooldown = 1.2f;
+    public float attackCooldown = 3f;
     public float attackHitDelay = 0.2f; // 애니 타이밍 맞추기용
     public float attackHitRadius = 1.2f;
     public Transform attackHitPoint;
@@ -50,6 +50,11 @@ public class EnemyAI : MonoBehaviour
     [Header("Return")]
     public Vector3 homePos;
     public float homeArriveDist = 1.0f;
+
+
+    public float chaseMemoryTime = 1.5f; // 시야 잃어도 1.5초는 추격 유지
+    [HideInInspector] public float lastSeenTime = -999f;
+
 
     public StateMachine StateMachine { get; private set; }
     public EnemyIdleState IdleState { get; private set; }
@@ -68,6 +73,7 @@ public class EnemyAI : MonoBehaviour
         {
             _animator = GetComponent<Animator>();
         }
+
 
         _agent.angularSpeed = 360f;     // 회전 속도(너무 낮으면 미끄러짐)
         _agent.acceleration = 20f;      // 가속(너무 낮으면 둔함)
@@ -96,7 +102,7 @@ public class EnemyAI : MonoBehaviour
         IdleState = new EnemyIdleState(this);
         PatrolState = new EnemyPatrolState(this);
         ChaseState = new EnemyChaseState(this);
-        //AttackState = new EnemyAttackState(this);
+        AttackState = new EnemyAttackState(this);
         ReturnState = new EnemyReturnState(this);
 
         StateMachine.ChangeState(IdleState);
@@ -122,13 +128,13 @@ public class EnemyAI : MonoBehaviour
 
     void Move()
     {
-        float speed01 = 0f; // 애니메이터용 속도 0~1
-        if (_agent != null && _agent.speed > 0.01f)
-        {
-            speed01 = _agent.velocity.magnitude / chaseSpeed;
-            speed01 = Mathf.Clamp01(speed01);
-        }
-        _animator.SetFloat("Blend", speed01, 0.1f, Time.deltaTime);
+        float v = (_agent != null) ? _agent.velocity.magnitude : 0f;
+
+        bool moving = v > 0.05f;                 // 움직이냐
+        bool running = (_agent != null && _agent.speed >= chaseSpeed - 0.1f); // 달리기냐(속도로 판정)
+
+        _animator.SetBool("IsWalking", moving);
+        _animator.SetBool("IsRunning", moving && running);
 
     }
 
@@ -136,44 +142,51 @@ public class EnemyAI : MonoBehaviour
     {
         _agent.isStopped = false;
         _agent.speed = speed;
-        _agent.SetDestination(target);
+
+        Vector3 dir = (target - transform.position);
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude > 0.001f)
+            dir.Normalize();
+
+        //  플레이어에게서 이만큼 떨어진 위치를 목표로
+        float keepDistance = _agent.stoppingDistance; // 또는 attackRange - 0.2f
+        Vector3 offsetTarget = target - dir * keepDistance;
+
+        _agent.SetDestination(offsetTarget);
     }
 
     public float GetDistanceToPlayer()
     {
+        if (_player == null) return Mathf.Infinity;
         return Vector3.Distance(transform.position, _player.position);
     }
 
     public bool IsPlayerOnSight()
     {
-        if (GetDistanceToPlayer() > fovRange)
-        {
-            return false;
-        }
+        if (_player == null) return false;
 
-        // 캐릭터가 살짝 위 혹은 아래에 있을 수 있으니 y축은 무시
-        Vector3 directionToPlayer = (_player.position - transform.position);
-        directionToPlayer.y = 0f;
-        directionToPlayer.Normalize();
+        float dist = GetDistanceToPlayer();
+        if (dist > fovRange) return false;
 
-        float angleToPlayer = Vector3.Angle(transform.forward, directionToPlayer);
+        Vector3 dir = (_player.position - transform.position);
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f) return true;
+        dir.Normalize();
 
-        // 시야각이 90도면 실제 시야는 좌45 우 45
-        if (angleToPlayer < fovAngle / 2f)
-        {
-            RaycastHit hit;
-            Vector3 enemyEyePos = transform.position + Vector3.up;
+        float angle = Vector3.Angle(transform.forward, dir);
+        if (angle >= fovAngle / 2f) return false;
 
-            if (Physics.Raycast(enemyEyePos, directionToPlayer, out hit, fovRange))
-            {
-                if (hit.transform == _player)
-                {
-                    return true;
-                }
-            }
-        }
+        RaycastHit hit;
+        Vector3 eye = transform.position + Vector3.up;
+
+        if (Physics.Raycast(eye, dir, out hit, fovRange))
+            return hit.transform == _player;
+
         return false;
     }
+
+
 
     public void TakeDamge(int damage)
     {

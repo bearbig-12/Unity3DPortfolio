@@ -15,7 +15,7 @@ public class PlayerRollState : State
 
     public void Enter()
     {
-        Debug.Log("Entered Roll State");
+        //Debug.Log("Entered Roll State");
         _elapsed = 0f;
 
         _player.ChangeStamina(-15);
@@ -69,6 +69,6 @@ public class PlayerRollState : State
 
     public void Exit()
     {
-        Debug.Log("Exited Roll State");
+       // Debug.Log("Exited Roll State");
     }
 }

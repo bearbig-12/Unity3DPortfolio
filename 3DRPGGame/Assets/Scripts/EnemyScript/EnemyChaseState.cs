@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,7 +14,7 @@ public class EnemyChaseState : State
     public void Enter()
     {
         // Debug.Log("Entered Chase State");
-        if(_enemy._player != null)
+        if (_enemy._player != null)
         {
             _enemy.MoveTo(_enemy._player.position, _enemy.chaseSpeed);
         }
@@ -22,18 +22,26 @@ public class EnemyChaseState : State
 
     public void Execute()
     {
-        //if (_enemy.GetDistanceToPlayer() > _enemy.returnRange)
-        //{
-        //    _enemy.StateMachine.ChangeState(_enemy.ReturnState);
-        //    return;
-        //}
-        //if (!_enemy.IsPlayerOnSight())
-        //{
-        //    _enemy.StateMachine.ChangeState(_enemy.PatrolState);
-        //    return;
-        //}
-        // ÇÃ·¹ÀÌ¾î À§Ä¡·Î °è¼Ó ÀÌµ¿
-        if(_enemy._player != null)
+
+
+        if (_enemy.GetDistanceToPlayer() < _enemy.attackRange)
+        {
+            _enemy.StateMachine.ChangeState(_enemy.AttackState);
+            return;
+
+        }
+        if (_enemy.GetDistanceToPlayer() > _enemy.returnRange)
+        {
+            _enemy.StateMachine.ChangeState(_enemy.ReturnState);
+        
+        }
+        if (!_enemy.IsPlayerOnSight())
+        {
+            _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+  
+        }
+        // í”Œë ˆì´ì–´ ìœ„ì¹˜ë¡œ ê³„ì† ì´ë™
+        if (_enemy._player != null)
         {
             _enemy.MoveTo(_enemy._player.position, _enemy.chaseSpeed);
         }
@@ -41,6 +49,5 @@ public class EnemyChaseState : State
 
     public void Exit()
     {
-        Debug.Log("Exited Chase State");
     }
 }

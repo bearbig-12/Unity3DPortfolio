@@ -5,18 +5,19 @@ using UnityEngine;
 public class StateMachine
 {
     private State _currentState;
-    public void ChangeState(State newState)
+    public void ChangeState(State next)
     {
-        if (_currentState != null)
+        if (next == null)
         {
-            _currentState.Exit();
+            Debug.LogError("[StateMachine] next is NULL");
+            return;
         }
-        _currentState = newState;
 
-        if(_currentState != null)
-        {
-            _currentState.Enter();
-        }
+        if (_currentState == next) return;
+
+        _currentState?.Exit();
+        _currentState = next;
+        _currentState.Enter();
     }
     // Start is called before the first frame update
     

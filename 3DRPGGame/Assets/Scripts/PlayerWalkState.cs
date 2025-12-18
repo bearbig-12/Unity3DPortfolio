@@ -13,7 +13,7 @@ public class PlayerWalkState : State
 
     public  void Enter()
     {
-        Debug.Log("Entered Walk State");
+        //Debug.Log("Entered Walk State");
         _player.finalSpeed = _player.speed;
     }
 
@@ -33,6 +33,6 @@ public class PlayerWalkState : State
     }
     public  void Exit()
     {
-        Debug.Log("Exited Walk State");
+        //Debug.Log("Exited Walk State");
     }
 }
