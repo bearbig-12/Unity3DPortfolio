@@ -48,7 +48,6 @@ public class PlayerMovement : MonoBehaviour
     public float bladeRadius = 0.12f; // 칼 두께
     public LayerMask enemyLayer;
     public int attackDamage = 20;
-
     // State
     public StateMachine StateMachine { get; private set; }
     public PlayerIdleState IdleState { get; private set; }
@@ -248,7 +247,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    void TakeDamage(int damage)
+    public void TakeDamage(int damage)
     {
         _currentHealth -= damage;
         _healthbar.SetHealth(_currentHealth);
@@ -267,8 +266,16 @@ public class PlayerMovement : MonoBehaviour
     }
     public void AnimEvent_AttackStart()
     {
+        if (_attackActive) return;   // 중복 호출 방지
         _attackActive = true;
         _enemiesHit.Clear();     // 같은 공격에서 중복 히트 방지
+    }
+
+    public void AnimEvent_AttackEnd()
+    {
+        _attackActive = false;
+        _enemiesHit.Clear();
+        Debug.Log("[Attack] Start");
     }
     public void WeaponHitCheck()
     {
@@ -309,12 +316,7 @@ public class PlayerMovement : MonoBehaviour
         //}
     }
 
-    // 공격 끝 프레임 (선택)
-    public void AnimEvent_AttackEnd()
-    {
-        _attackActive = false;
-        _enemiesHit.Clear();
-    }
+   
 
 
     void OnDrawGizmosSelected()

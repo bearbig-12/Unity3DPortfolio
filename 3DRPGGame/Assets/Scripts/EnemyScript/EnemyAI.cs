@@ -19,15 +19,13 @@ public class EnemyAI : MonoBehaviour
     public Vector3 healthBarOffset = new Vector3(0, 2.5f, 0);
 
     [Header("Range")]
-    public float alertRange = 10f; // Idle -> Patrol¿ë °Å¸®
-    public float fovRange = 10f; // Patrol -> Chase¿ë °Å¸®
-    public float fovAngle = 90f; // EnemyÀÇ ½Ã¾ß°¢
-    public float attackRange = 2f; // Chase -> Attack (°ø°Ý À¯È¿°Å¸®)
-    public float chaseBreakRange = 20f; // Chase -> Patrol °Å¸®
+    public float alertRange = 10f; // Idle -> Patrolï¿½ï¿½ ï¿½Å¸ï¿½
+    public float fovRange = 10f; // Patrol -> Chaseï¿½ï¿½ ï¿½Å¸ï¿½
+    public float fovAngle = 90f; // Enemyï¿½ï¿½ ï¿½Ã¾ß°ï¿½
+    public float attackRange = 2f; // Chase -> Attack (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È¿ï¿½Å¸ï¿½)
     public float returnRange = 30f; // patrol -> Idle
 
     [Header("Speeds")]
-    public float idleSpeed = 0f;
     public float patrolSpeed = 3f;
     public float chaseSpeed = 6f;
 
@@ -40,20 +38,15 @@ public class EnemyAI : MonoBehaviour
 
     [Header("Attack")]
     public float attackCooldown = 3f;
-    public float attackHitDelay = 0.2f; // ¾Ö´Ï Å¸ÀÌ¹Ö ¸ÂÃß±â¿ë
-    public float attackHitRadius = 1.2f;
-    public Transform attackHitPoint;
-    public LayerMask playerLayer;
     public int attackDamage = 10;
     public float nextAttackTime = 0f;
+    public EnemyDamageHitbox[] hitboxes;
 
     [Header("Return")]
     public Vector3 homePos;
     public float homeArriveDist = 1.0f;
 
 
-    public float chaseMemoryTime = 1.5f; // ½Ã¾ß ÀÒ¾îµµ 1.5ÃÊ´Â Ãß°Ý À¯Áö
-    [HideInInspector] public float lastSeenTime = -999f;
 
 
     public StateMachine StateMachine { get; private set; }
@@ -75,9 +68,9 @@ public class EnemyAI : MonoBehaviour
         }
 
 
-        _agent.angularSpeed = 360f;     // È¸Àü ¼Óµµ(³Ê¹« ³·À¸¸é ¹Ì²ô·¯Áü)
-        _agent.acceleration = 20f;      // °¡¼Ó(³Ê¹« ³·À¸¸é µÐÇÔ)
-        _agent.autoBraking = true;      // ÄÚ³Ê¿¡¼­ ¼Óµµ ÁÙÀÌ±â
+        _agent.angularSpeed = 360f;     // È¸ï¿½ï¿½ ï¿½Óµï¿½(ï¿½Ê¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì²ï¿½ï¿½ï¿½ï¿½ï¿½)
+        _agent.acceleration = 20f;      // ï¿½ï¿½ï¿½ï¿½(ï¿½Ê¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+        _agent.autoBraking = true;      // ï¿½Ú³Ê¿ï¿½ï¿½ï¿½ ï¿½Óµï¿½ ï¿½ï¿½ï¿½Ì±ï¿½
     }
 
     // Start is called before the first frame update
@@ -130,8 +123,8 @@ public class EnemyAI : MonoBehaviour
     {
         float v = (_agent != null) ? _agent.velocity.magnitude : 0f;
 
-        bool moving = v > 0.05f;                 // ¿òÁ÷ÀÌ³Ä
-        bool running = (_agent != null && _agent.speed >= chaseSpeed - 0.1f); // ´Þ¸®±â³Ä(¼Óµµ·Î ÆÇÁ¤)
+        bool moving = v > 0.05f;                 // ï¿½ï¿½ï¿½ï¿½ï¿½Ì³ï¿½
+        bool running = (_agent != null && _agent.speed >= chaseSpeed - 0.1f); // ï¿½Þ¸ï¿½ï¿½ï¿½ï¿½(ï¿½Óµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
 
         _animator.SetBool("IsWalking", moving);
         _animator.SetBool("IsRunning", moving && running);
@@ -149,8 +142,9 @@ public class EnemyAI : MonoBehaviour
         if (dir.sqrMagnitude > 0.001f)
             dir.Normalize();
 
-        //  ÇÃ·¹ÀÌ¾î¿¡°Ô¼­ ÀÌ¸¸Å­ ¶³¾îÁø À§Ä¡¸¦ ¸ñÇ¥·Î
-        float keepDistance = _agent.stoppingDistance; // ¶Ç´Â attackRange - 0.2f
+
+        //  ï¿½Ã·ï¿½ï¿½Ì¾î¿¡ï¿½Ô¼ï¿½ ï¿½Ì¸ï¿½Å­ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡ï¿½ï¿½ ï¿½ï¿½Ç¥ï¿½ï¿½
+        float keepDistance = _agent.stoppingDistance; // ï¿½Ç´ï¿½ attackRange - 0.2f
         Vector3 offsetTarget = target - dir * keepDistance;
 
         _agent.SetDestination(offsetTarget);
@@ -181,14 +175,19 @@ public class EnemyAI : MonoBehaviour
         Vector3 eye = transform.position + Vector3.up;
 
         if (Physics.Raycast(eye, dir, out hit, fovRange))
-            return hit.transform == _player;
+        {
+            if (hit.transform == _player)
+                return true;
+            if (hit.transform.IsChildOf(_player))
+                return true;
+        }
 
         return false;
     }
 
 
 
-    public void TakeDamge(int damage)
+    public void TakeDamage(int damage)
     {
         if (isDead)
             return;
@@ -208,21 +207,13 @@ public class EnemyAI : MonoBehaviour
         isDead = true;
         _agent.isStopped = true;
         _animator.SetTrigger("Die");
-        // Ãß°¡: ÄÝ¶óÀÌ´õ ºñÈ°¼ºÈ­, ¾ÆÀÌÅÛ µå¶ø µî
+        // ï¿½ß°ï¿½: ï¿½Ý¶ï¿½ï¿½Ì´ï¿½ ï¿½ï¿½È°ï¿½ï¿½È­, ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½
         Collider col = GetComponentInChildren<Collider>();
         if (col != null)
         {
             col.enabled = false;
         }
     }
-
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-        healthBar.SetHealth(currentHealth);
-    }
-
-
 
     
 
@@ -234,11 +225,11 @@ public class EnemyAI : MonoBehaviour
         Gizmos.color = Color.cyan ;
         Gizmos.DrawWireSphere(transform.position, alertRange);
 
-        // fovRange (Patrol -> Chase °Å¸®)
+        // fovRange (Patrol -> Chase ï¿½Å¸ï¿½)
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, fovRange);
 
-        // FOV °¢µµ Ç¥½Ã (ÁÂ/¿ì °æ°è¼±)
+        // FOV ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ (ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½è¼±)
         Vector3 origin = transform.position + Vector3.up * 1.0f;
 
         float half = fovAngle * 0.5f;
@@ -248,7 +239,7 @@ public class EnemyAI : MonoBehaviour
         Gizmos.DrawLine(origin, origin + leftDir.normalized * fovRange);
         Gizmos.DrawLine(origin, origin + rightDir.normalized * fovRange);
 
-        // (¼±ÅÃ) ½Ã¾ß ºÎÃ¤²ÃÀ» ´ëÃæ ±×·ÁÁÖ±â (µð¹ö±×¿ë)
+        // (ï¿½ï¿½ï¿½ï¿½) ï¿½Ã¾ï¿½ ï¿½ï¿½Ã¤ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½×·ï¿½ï¿½Ö±ï¿½ (ï¿½ï¿½ï¿½ï¿½×¿ï¿½)
         int steps = 24;
         Vector3 prev = origin + leftDir.normalized * fovRange;
         for (int i = 1; i <= steps; i++)
