@@ -16,7 +16,6 @@ public class EnemyAttackState : State
 
     public void Enter()
     {
-        Debug.Log("[EnemyAttack] Enter");
 
         _enemy._agent.isStopped = true;
         _enemy._agent.ResetPath();
@@ -25,7 +24,6 @@ public class EnemyAttackState : State
         if (_enemy._player != null)
             _player = _enemy._player.GetComponent<PlayerMovement>();
 
-        SetHitboxes(true);
     }
 
     public void Execute()
@@ -45,22 +43,35 @@ public class EnemyAttackState : State
         FacePlayer();
 
         var stateInfo = _enemy._animator.GetCurrentAnimatorStateInfo(0);
-        bool isAttackAnim = stateInfo.IsTag("Attack");
-        bool isAttackAnimEnded = isAttackAnim && stateInfo.normalizedTime >= 0.9f;
+        bool inAttackAnim = stateInfo.IsTag("Attack");
+        bool isAttackAnimEnded = inAttackAnim && stateInfo.normalizedTime >= 0.9f;
 
-        // 공격 중이 아니고 공격거리 벗어나면 추적으로 전환
-        if (!isAttackAnim && _enemy.GetDistanceToPlayer() > _enemy.attackRange + _attackExitBuffer)
+
+        float dist = _enemy.GetDistanceToPlayer();
+
+        // 공격 애니 중에는 항상 멈춤
+        if (inAttackAnim)
+        {
+            _enemy._agent.isStopped = true;
+        }
+        else
+        {
+            _enemy._agent.isStopped = false;
+        }
+
+        // 공격 애니가 끝난 뒤에만 이탈 체크
+        if (!inAttackAnim && dist > _enemy.attackRange + _attackExitBuffer)
         {
             _enemy._animator.ResetTrigger("BasicAttack");
             _enemy._animator.ResetTrigger("HardAttack");
             _enemy._animator.CrossFade("Movement", 0.05f, 0);
-
             _enemy.StateMachine.ChangeState(_enemy.ChaseState);
             return;
         }
 
         // 쿨다운, 기존 공격 애니메이션이 종료되었다면 다음 공격
-        if (Time.time > _enemy.nextAttackTime && (!isAttackAnim || isAttackAnimEnded))
+        if (dist <= _enemy.attackRange + _attackExitBuffer &&
+              Time.time > _enemy.nextAttackTime && (!inAttackAnim || isAttackAnimEnded))
         {
             _enemy.nextAttackTime = Time.time + _enemy.attackCooldown;
 
@@ -88,7 +99,7 @@ public class EnemyAttackState : State
                 int idx = Random.Range(0, 2);
                 _enemy._animator.SetInteger("BasicAttackIndex", idx);
                 _enemy._animator.SetTrigger("BasicAttack");
-                _enemy.attackDamage = 10;
+                _enemy.attackDamage = 5;
             }
 
         }
@@ -97,7 +108,6 @@ public class EnemyAttackState : State
     {
         _enemy._agent.updateRotation = true;
         _enemy._agent.isStopped = false;
-        SetHitboxes(false);
 
     }
 
@@ -116,15 +126,5 @@ public class EnemyAttackState : State
         );
     }
 
-    private void SetHitboxes(bool value)
-    {
-        if (_enemy.hitboxes == null) return;
-        foreach (var h in _enemy.hitboxes)
-        {
-            if (h != null)
-            {
-                h.SetActive(value);
-            }
-        }
-    }
+
 }

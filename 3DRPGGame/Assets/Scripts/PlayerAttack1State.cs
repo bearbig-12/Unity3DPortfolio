@@ -17,7 +17,6 @@ public class PlayerAttack1State : State
 
     public void Enter()
     {
-        Debug.Log("Entered Attack1 State");
         _player.SetAttacking(true);
 
         _player.ChangeStamina(-10);
@@ -77,7 +76,6 @@ public class PlayerAttack1State : State
 
     public void Exit()
     {
-        Debug.Log("Exited Attack1 State");
         _player.SetAttacking(false);
         _isNextAttackQueued = false;
     }

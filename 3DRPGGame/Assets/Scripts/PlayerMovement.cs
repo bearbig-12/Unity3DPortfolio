@@ -275,7 +275,6 @@ public class PlayerMovement : MonoBehaviour
     {
         _attackActive = false;
         _enemiesHit.Clear();
-        Debug.Log("[Attack] Start");
     }
     public void WeaponHitCheck()
     {

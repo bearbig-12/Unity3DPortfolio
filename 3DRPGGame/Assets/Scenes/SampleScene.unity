@@ -1180,6 +1180,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e85ef476cde13844bb71fa3e5964f640, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!4 &1154611538 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7186366653992936469, guid: aeee9e0d144c5494f8c39d91ce6c3cc5, type: 3}
+  m_PrefabInstance: {fileID: 5419525354668351519}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1264570985
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1208,6 +1213,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: -26.059736
       objectReference: {fileID: 0}
+    - target: {fileID: 7254640243635299434, guid: 57fa8bf1c6f3a874ab5470de44931c3d, type: 3}
+      propertyPath: _player
+      value: 
+      objectReference: {fileID: 1154611538}
     - target: {fileID: 7254640243635299434, guid: 57fa8bf1c6f3a874ab5470de44931c3d, type: 3}
       propertyPath: healthBar
       value: 

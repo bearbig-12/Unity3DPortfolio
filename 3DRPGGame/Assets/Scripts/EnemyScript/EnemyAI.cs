@@ -215,7 +215,32 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    
+    public void AnimEvent_AttackStart()
+    {
+        if (hitboxes == null) return;
+        foreach (var h in hitboxes)
+        {
+            if (h != null)
+            {
+                h.SetActive(true);
+            }
+        }
+            
+    }
+
+    public void AnimEvent_AttackEnd()
+    {
+        if (hitboxes == null) return;
+        foreach (var h in hitboxes)
+        {
+            if (h != null)
+            {
+                h.SetActive(false);
+            }
+
+        }
+    }
+
 
 
 

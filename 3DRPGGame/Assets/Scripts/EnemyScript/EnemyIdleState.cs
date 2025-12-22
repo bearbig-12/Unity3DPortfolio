@@ -15,7 +15,6 @@ public class EnemyIdleState : State
 
     public void Enter()
     {
-        Debug.Log("Entered Idle State");
         _enemy._agent.isStopped = true;
         _enemy._agent.ResetPath();
     }
