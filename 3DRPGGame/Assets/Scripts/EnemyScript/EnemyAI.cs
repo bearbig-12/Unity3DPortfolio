@@ -19,10 +19,10 @@ public class EnemyAI : MonoBehaviour
     public Vector3 healthBarOffset = new Vector3(0, 2.5f, 0);
 
     [Header("Range")]
-    public float alertRange = 10f; // Idle -> Patrol�� �Ÿ�
-    public float fovRange = 10f; // Patrol -> Chase�� �Ÿ�
-    public float fovAngle = 90f; // Enemy�� �þ߰�
-    public float attackRange = 2f; // Chase -> Attack (���� ��ȿ�Ÿ�)
+    public float alertRange = 10f; // Idle -> Patrol
+    public float fovRange = 10f; // Patrol -> Chase
+    public float fovAngle = 90f; // Enemy 시야각
+    public float attackRange = 2f; // Chase -> Attack 
     public float returnRange = 30f; // patrol -> Idle
 
     [Header("Speeds")]
@@ -37,10 +37,15 @@ public class EnemyAI : MonoBehaviour
 
 
     [Header("Attack")]
-    public float attackCooldown = 3f;
+    public float attackCooldown = 1f;
     public int attackDamage = 10;
     public float nextAttackTime = 0f;
     public EnemyDamageHitbox[] hitboxes;
+
+    [Header("Enemy Animator Triggers")]
+    public string basicAttackTrigger = "BasicAttack";
+    public string hardAttackTrigger = "HardAttack";
+
 
     [Header("Return")]
     public Vector3 homePos;
@@ -53,10 +58,10 @@ public class EnemyAI : MonoBehaviour
     public EnemyIdleState IdleState { get; private set; }
     public EnemyPatrolState PatrolState { get; private set; }
     public EnemyChaseState ChaseState { get; private set; }
-    public EnemyAttackState AttackState { get; private set; }
+    public State AttackState { get; protected set; }
     public EnemyReturnState ReturnState { get; private set; }
 
-    void Awake()
+    protected virtual void Awake()
     {
         if (_agent == null)
         {
@@ -68,13 +73,13 @@ public class EnemyAI : MonoBehaviour
         }
 
 
-        _agent.angularSpeed = 360f;     // ȸ�� �ӵ�(�ʹ� ������ �̲�����)
-        _agent.acceleration = 20f;      // ����(�ʹ� ������ ����)
-        _agent.autoBraking = true;      // �ڳʿ��� �ӵ� ���̱�
+        _agent.angularSpeed = 360f;     
+        _agent.acceleration = 20f;      
+        _agent.autoBraking = true;      
     }
 
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
         currentHealth = maxHealth;
 
@@ -91,25 +96,23 @@ public class EnemyAI : MonoBehaviour
             _player = _p.transform;
         }
 
-        StateMachine = new StateMachine();
-        IdleState = new EnemyIdleState(this);
-        PatrolState = new EnemyPatrolState(this);
-        ChaseState = new EnemyChaseState(this);
-        AttackState = new EnemyAttackState(this);
-        ReturnState = new EnemyReturnState(this);
+        InitializeStates();
 
         StateMachine.ChangeState(IdleState);
     }
 
     // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
+        if(isDead)
+            return;
+
         Move();
         StateMachine.Update();
 
     }
 
-    void LateUpdate()
+    protected virtual void LateUpdate()
     {
         if (healthBar != null)
         {
@@ -119,7 +122,7 @@ public class EnemyAI : MonoBehaviour
 
     }
 
-    void Move()
+    protected virtual void Move()
     {
         float v = (_agent != null) ? _agent.velocity.magnitude : 0f;
 
@@ -129,6 +132,16 @@ public class EnemyAI : MonoBehaviour
         _animator.SetBool("IsWalking", moving);
         _animator.SetBool("IsRunning", moving && running);
 
+    }
+
+    protected virtual void InitializeStates()
+    {
+        StateMachine = new StateMachine();
+        IdleState = new EnemyIdleState(this);
+        PatrolState = new EnemyPatrolState(this);
+        ChaseState = new EnemyChaseState(this);
+        AttackState = new EnemyAttackState(this);
+        ReturnState = new EnemyReturnState(this);
     }
 
     public void MoveTo(Vector3 target, float speed)
@@ -142,9 +155,7 @@ public class EnemyAI : MonoBehaviour
         if (dir.sqrMagnitude > 0.001f)
             dir.Normalize();
 
-
-        //  �÷��̾�Լ� �̸�ŭ ������ ��ġ�� ��ǥ��
-        float keepDistance = _agent.stoppingDistance; // �Ǵ� attackRange - 0.2f
+        float keepDistance = _agent.stoppingDistance; 
         Vector3 offsetTarget = target - dir * keepDistance;
 
         _agent.SetDestination(offsetTarget);
@@ -185,13 +196,19 @@ public class EnemyAI : MonoBehaviour
         return false;
     }
 
-
+    public virtual float GetEngageRange()
+    {
+        return attackRange;
+    }
 
     public void TakeDamage(int damage)
     {
         if (isDead)
             return;
         currentHealth -= damage;
+
+        OnDamaged(damage);
+
         if (healthBar != null)
         {
             healthBar.SetHealth(currentHealth);
@@ -202,20 +219,32 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
-    void Die()
+    protected virtual void Die()
     {
+        if (isDead) return;
         isDead = true;
         _agent.isStopped = true;
         _animator.SetTrigger("Die");
-        // �߰�: �ݶ��̴� ��Ȱ��ȭ, ������ ��� ��
+
         Collider col = GetComponentInChildren<Collider>();
-        if (col != null)
-        {
-            col.enabled = false;
-        }
+        if (col != null) col.enabled = false;
+
+        StartCoroutine(DespawnAfter(2f));
     }
 
-    public void AnimEvent_AttackStart()
+    private System.Collections.IEnumerator DespawnAfter(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Destroy(gameObject);
+    }
+
+    // 보스의 Phase 2를 위한 함수
+    protected virtual void OnDamaged(int damage)
+    {
+    }
+
+
+    public virtual void AnimEvent_AttackStart()
     {
         if (hitboxes == null) return;
         foreach (var h in hitboxes)
@@ -228,7 +257,7 @@ public class EnemyAI : MonoBehaviour
             
     }
 
-    public void AnimEvent_AttackEnd()
+    public virtual void AnimEvent_AttackEnd()
     {
         if (hitboxes == null) return;
         foreach (var h in hitboxes)
@@ -244,37 +273,37 @@ public class EnemyAI : MonoBehaviour
 
 
 
-    void OnDrawGizmos()
-    {
-        // alertRange (Idle -> Patrol)
-        Gizmos.color = Color.cyan ;
-        Gizmos.DrawWireSphere(transform.position, alertRange);
+    //void OnDrawGizmos()
+    //{
+    //    // alertRange (Idle -> Patrol)
+    //    Gizmos.color = Color.cyan ;
+    //    Gizmos.DrawWireSphere(transform.position, alertRange);
 
-        // fovRange (Patrol -> Chase �Ÿ�)
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, fovRange);
+    //    // fovRange (Patrol -> Chase �Ÿ�)
+    //    Gizmos.color = Color.red;
+    //    Gizmos.DrawWireSphere(transform.position, fovRange);
 
-        // FOV ���� ǥ�� (��/�� ��輱)
-        Vector3 origin = transform.position + Vector3.up * 1.0f;
+    //    // FOV ���� ǥ�� (��/�� ��輱)
+    //    Vector3 origin = transform.position + Vector3.up * 1.0f;
 
-        float half = fovAngle * 0.5f;
-        Vector3 leftDir = Quaternion.Euler(0f, -half, 0f) * transform.forward;
-        Vector3 rightDir = Quaternion.Euler(0f, half, 0f) * transform.forward;
+    //    float half = fovAngle * 0.5f;
+    //    Vector3 leftDir = Quaternion.Euler(0f, -half, 0f) * transform.forward;
+    //    Vector3 rightDir = Quaternion.Euler(0f, half, 0f) * transform.forward;
 
-        Gizmos.DrawLine(origin, origin + leftDir.normalized * fovRange);
-        Gizmos.DrawLine(origin, origin + rightDir.normalized * fovRange);
+    //    Gizmos.DrawLine(origin, origin + leftDir.normalized * fovRange);
+    //    Gizmos.DrawLine(origin, origin + rightDir.normalized * fovRange);
 
-        // (����) �þ� ��ä���� ���� �׷��ֱ� (����׿�)
-        int steps = 24;
-        Vector3 prev = origin + leftDir.normalized * fovRange;
-        for (int i = 1; i <= steps; i++)
-        {
-            float t = (float)i / steps;
-            float ang = Mathf.Lerp(-half, half, t);
-            Vector3 dir = Quaternion.Euler(0f, ang, 0f) * transform.forward;
-            Vector3 next = origin + dir.normalized * fovRange;
-            Gizmos.DrawLine(prev, next);
-            prev = next;
-        }
-    }
+    //    // (����) �þ� ��ä���� ���� �׷��ֱ� (����׿�)
+    //    int steps = 24;
+    //    Vector3 prev = origin + leftDir.normalized * fovRange;
+    //    for (int i = 1; i <= steps; i++)
+    //    {
+    //        float t = (float)i / steps;
+    //        float ang = Mathf.Lerp(-half, half, t);
+    //        Vector3 dir = Quaternion.Euler(0f, ang, 0f) * transform.forward;
+    //        Vector3 next = origin + dir.normalized * fovRange;
+    //        Gizmos.DrawLine(prev, next);
+    //        prev = next;
+    //    }
+    //}
 }

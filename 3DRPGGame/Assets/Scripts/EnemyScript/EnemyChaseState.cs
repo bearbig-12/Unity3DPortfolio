@@ -24,21 +24,40 @@ public class EnemyChaseState : State
     {
 
 
-        if (_enemy.GetDistanceToPlayer() < _enemy.attackRange)
+        //if (_enemy.GetDistanceToPlayer() < _enemy.attackRange)
+        //{
+        //    _enemy.StateMachine.ChangeState(_enemy.AttackState);
+        //    return;
+
+        //}
+        //if (_enemy.GetDistanceToPlayer() > _enemy.returnRange)
+        //{
+        //    _enemy.StateMachine.ChangeState(_enemy.ReturnState);
+
+        //}
+        //if (!_enemy.IsPlayerOnSight())
+        //{
+        //    _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+
+        //}
+        //// 플레이어 위치로 계속 이동
+        //if (_enemy._player != null)
+        //{
+        //    _enemy.MoveTo(_enemy._player.position, _enemy.chaseSpeed);
+        //}
+
+        if (_enemy.GetDistanceToPlayer() < _enemy.GetEngageRange())
         {
             _enemy.StateMachine.ChangeState(_enemy.AttackState);
             return;
-
         }
         if (_enemy.GetDistanceToPlayer() > _enemy.returnRange)
         {
             _enemy.StateMachine.ChangeState(_enemy.ReturnState);
-        
         }
         if (!_enemy.IsPlayerOnSight())
         {
             _enemy.StateMachine.ChangeState(_enemy.PatrolState);
-  
         }
         // 플레이어 위치로 계속 이동
         if (_enemy._player != null)

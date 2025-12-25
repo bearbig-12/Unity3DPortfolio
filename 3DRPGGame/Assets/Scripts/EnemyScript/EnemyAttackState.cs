@@ -24,6 +24,7 @@ public class EnemyAttackState : State
         if (_enemy._player != null)
             _player = _enemy._player.GetComponent<PlayerMovement>();
 
+        _enemy._animator.SetBool("IsAttacking", true);
     }
 
     public void Execute()
@@ -60,10 +61,9 @@ public class EnemyAttackState : State
         }
 
         // 공격 애니가 끝난 뒤에만 이탈 체크
-        if (!inAttackAnim && dist > _enemy.attackRange + _attackExitBuffer)
+        if (dist > _enemy.attackRange + _attackExitBuffer && (!inAttackAnim || isAttackAnimEnded))
         {
-            _enemy._animator.ResetTrigger("BasicAttack");
-            _enemy._animator.ResetTrigger("HardAttack");
+            ResetAttackTriggers(); 
             _enemy._animator.CrossFade("Movement", 0.05f, 0);
             _enemy.StateMachine.ChangeState(_enemy.ChaseState);
             return;
@@ -89,16 +89,16 @@ public class EnemyAttackState : State
 
             if (isHard)
             {
-                int idx = Random.Range(0, 3);
-                _enemy._animator.SetInteger("HardAttackIndex", idx);
-                _enemy._animator.SetTrigger("HardAttack");
-                _enemy.attackDamage = 20;
+               // int idx = Random.Range(0, 3);
+               // _enemy._animator.SetInteger("HardAttackIndex", idx);
+                _enemy._animator.SetTrigger(_enemy.hardAttackTrigger);
+                _enemy.attackDamage = 10;
             }
             else
             {
-                int idx = Random.Range(0, 2);
-                _enemy._animator.SetInteger("BasicAttackIndex", idx);
-                _enemy._animator.SetTrigger("BasicAttack");
+                //int idx = Random.Range(0, 2);
+               // _enemy._animator.SetInteger("BasicAttackIndex", idx);
+                _enemy._animator.SetTrigger(_enemy.basicAttackTrigger);
                 _enemy.attackDamage = 5;
             }
 
@@ -108,6 +108,7 @@ public class EnemyAttackState : State
     {
         _enemy._agent.updateRotation = true;
         _enemy._agent.isStopped = false;
+        _enemy._animator.SetBool("IsAttacking", false);
 
     }
 
@@ -123,8 +124,21 @@ public class EnemyAttackState : State
             _enemy.transform.rotation,
             targetRot,
             Time.deltaTime * _faceSpeed
-        );
-    }
+        ); 
 
+
+    }
+    private void ResetAttackTriggers()
+    {
+        if (!string.IsNullOrEmpty(_enemy.basicAttackTrigger))
+        {
+            _enemy._animator.ResetTrigger(_enemy.basicAttackTrigger);
+        }
+        if (!string.IsNullOrEmpty(_enemy.hardAttackTrigger))
+        {
+            _enemy._animator.ResetTrigger(_enemy.hardAttackTrigger);
+
+        }
+    }
 
 }
