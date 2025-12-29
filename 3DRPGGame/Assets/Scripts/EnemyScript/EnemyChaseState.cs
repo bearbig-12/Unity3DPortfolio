@@ -57,7 +57,14 @@ public class EnemyChaseState : State
         }
         if (!_enemy.IsPlayerOnSight())
         {
-            _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+            if (_enemy is BossAI)
+            {
+                _enemy.StateMachine.ChangeState(_enemy.ReturnState);
+            }
+            else
+            {
+                _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+            }
         }
         // 플레이어 위치로 계속 이동
         if (_enemy._player != null)

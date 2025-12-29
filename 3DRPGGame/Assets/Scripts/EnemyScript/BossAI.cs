@@ -37,7 +37,7 @@ public class BossAI : EnemyAI
     public int aoeDamage = 15;
 
     [Header("Boss Animator Triggers")]
-    public string meleeTrigger = "BasicAttack";
+    public string meleeTrigger = "MeleeAttack";
     public string rangedTrigger = "RangedAttack";
     public string aoeTrigger = "AOEAttack";
     public string phase2Trigger = "Phase2";
@@ -58,18 +58,24 @@ public class BossAI : EnemyAI
     }
     protected override void OnDamaged(int damage)
     {
-        if (CurrentPhase == BossPhase.Phase1 && currentHealth <= maxHealth * phase2HealthRatio)
+        if (CurrentPhase == BossPhase.Phase1 && currentHealth <= 50f)
         {
+            Debug.Log("Boss Phase Changed to Phase 2");
             CurrentPhase = BossPhase.Phase2;
             OnPhaseChanged();
         }
     }
 
-    void OnPhaseChanged()
+    public override float GetEngageRange()
+    {
+        return rangedRange;
+    }
+
+    public void OnPhaseChanged()
     {
         if (!string.IsNullOrEmpty(phase2Trigger))
         {
-            _animator.SetTrigger(phase2Trigger);
+            //_animator.SetTrigger(phase2Trigger);
         }
     }
 

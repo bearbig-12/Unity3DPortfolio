@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 
 public class BossAttackState : State
@@ -31,7 +30,7 @@ public class BossAttackState : State
     {
         if (_boss._player == null)
         {
-            _boss.StateMachine.ChangeState(_boss.PatrolState);
+            _boss.StateMachine.ChangeState(_boss.ReturnState);
             return;
         }
 
@@ -58,10 +57,9 @@ public class BossAttackState : State
             _boss._agent.isStopped = false;
         }
 
-        if (!inAttackAnim && dist > engageRange + _attackExitBuffer)
+        if (dist > engageRange + _attackExitBuffer && (!inAttackAnim || isAttackAnimEnded))
         {
             ResetAttackTriggers();
-            _boss._animator.CrossFade("Movement", 0.05f, 0);
             _boss.StateMachine.ChangeState(_boss.ChaseState);
             return;
         }
@@ -97,24 +95,39 @@ public class BossAttackState : State
 
     private void TryAttack(float dist)
     {
-        if (_boss.CurrentPhase == BossAI.BossPhase.Phase2)
+        float relatedHP = 0;
+        float stamina = 0;
+
+        bool phase2 = _boss.CurrentPhase == BossAI.BossPhase.Phase2;
+
+        if(_player != null)
         {
-            if (dist <= _boss.aoeRange && _boss.IsAttackReady(BossAI.BossAttackType.Aoe))
-            {
-                TriggerAttack(BossAI.BossAttackType.Aoe, _boss.aoeDamage, _boss.aoeTrigger);
-                return;
-            }
+            relatedHP = _player._currentHealth - _boss.currentHealth;
+            stamina = _player._currentStamina;
         }
 
-        if (dist <= _boss.meleeRange && _boss.IsAttackReady(BossAI.BossAttackType.Melee))
+        var s = FuzzyBossAttack.AttackProb(relatedHP, stamina, dist, phase2);
+
+        if (dist > _boss.meleeRange) s.melee = 0f;
+        if (dist > _boss.rangedRange) s.ranged = 0f;
+        if (!phase2 || dist > _boss.aoeRange) s.aoe = 0f;
+        
+        float total = s.melee + s.ranged + s.aoe;
+        if (total <= 0.001f) return;
+
+        float r = UnityEngine.Random.Range(0f, total);
+
+        if (r < s.melee)
         {
             TriggerAttack(BossAI.BossAttackType.Melee, _boss.meleeDamage, _boss.meleeTrigger);
-            return;
         }
-
-        if (dist <= _boss.rangedRange && _boss.IsAttackReady(BossAI.BossAttackType.Ranged))
+        else if (r < s.melee + s.ranged)
         {
             TriggerAttack(BossAI.BossAttackType.Ranged, _boss.rangedDamage, _boss.rangedTrigger);
+        }
+        else
+        {
+            TriggerAttack(BossAI.BossAttackType.Aoe, _boss.aoeDamage, _boss.aoeTrigger);
         }
     }
 
@@ -125,7 +138,16 @@ public class BossAttackState : State
         _boss.SetAttackType(type);
         _boss.attackDamage = damage;
         _boss.ConsumeAttackCooldown(type);
-        _boss._animator.SetTrigger(trigger);
+        if(type == BossAI.BossAttackType.Melee)
+        {
+            int idx = Random.Range(0, 2);
+            _boss._animator.SetInteger("MeleeAttackIndex", idx);
+            _boss._animator.SetTrigger(trigger);
+        }
+        else
+        {
+            _boss._animator.SetTrigger(trigger);
+        }
     }
 
     private void ResetAttackTriggers()

@@ -23,7 +23,14 @@ public class EnemyIdleState : State
     {
         if (_enemy.GetDistanceToPlayer() <= _enemy.alertRange)
         {
-            _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+            if (_enemy is BossAI)
+            {
+                _enemy.StateMachine.ChangeState(_enemy.ChaseState);
+            }
+            else
+            {
+                _enemy.StateMachine.ChangeState(_enemy.PatrolState);
+            }
         }
     }
 

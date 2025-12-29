@@ -64,7 +64,6 @@ public class EnemyAttackState : State
         if (dist > _enemy.attackRange + _attackExitBuffer && (!inAttackAnim || isAttackAnimEnded))
         {
             ResetAttackTriggers(); 
-            _enemy._animator.CrossFade("Movement", 0.05f, 0);
             _enemy.StateMachine.ChangeState(_enemy.ChaseState);
             return;
         }
@@ -92,7 +91,7 @@ public class EnemyAttackState : State
                // int idx = Random.Range(0, 3);
                // _enemy._animator.SetInteger("HardAttackIndex", idx);
                 _enemy._animator.SetTrigger(_enemy.hardAttackTrigger);
-                _enemy.attackDamage = 10;
+                _enemy.attackDamage = 10 ;
             }
             else
             {
