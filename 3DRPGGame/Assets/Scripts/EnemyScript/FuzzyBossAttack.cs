@@ -33,35 +33,41 @@ public static class FuzzyBossAttack
         float far = RShoulder(distance, 6.5f, 11.0f);
 
         Scores s = new Scores();
+        float aoePriority = currentPhase ? 1f : 0f;
 
         if (currentPhase)
         {
             // AOE rules
-            Rule(ref s.aoe, mid, staLow);
-            Rule(ref s.aoe, close, playerAdv);
-            Rule(ref s.aoe, mid, even, staMid);
+            Rule(ref s.aoe, mid, staLow, 1.2f);
+            Rule(ref s.aoe, mid, playerAdv, 1.0f);
+            Rule(ref s.aoe, close, playerAdv, 0.8f);
         }
 
         // Melee rules
-        Rule(ref s.melee, close);                 // 거리 가까우면 기본 근접
-        Rule(ref s.melee, close, enemyAdv);
-        Rule(ref s.melee, close, even);
-        Rule(ref s.melee, close, staLow);
-        Rule(ref s.melee, close, staMid);
- 
+        Rule(ref s.melee, close, 0.9f);
+        Rule(ref s.melee, close, enemyAdv, 1.0f);
+        Rule(ref s.melee, close, even, 0.9f);
+        Rule(ref s.melee, close, staLow, 0.7f);
+        Rule(ref s.melee, close, staHigh, 0.6f);
+
 
         // Ranged rules
-        Rule(ref s.ranged, far);                  // 확실히 멀면 원거리
-        Rule(ref s.ranged, mid);       // 불리+중거리면 견제용
+        Rule(ref s.ranged, far, 1.0f);
+        Rule(ref s.ranged, mid,  0.7f);
+        Rule(ref s.ranged, mid, enemyAdv, 0.8f);
 
-     
-     
+        if (currentPhase && s.aoe >= aoePriority)
+        {
+            s.melee = 0f;
+            s.ranged = 0f;
+        }
+
         return s;
     }
 
-    static void Rule(ref float score, float a, float b = 1f, float c = 1f)
+    static void Rule(ref float score, float a, float b = 1f, float c = 1f, float weight = 1f)
     {
-        float w = Mathf.Min(a, Mathf.Min(b, c));
+        float w = Mathf.Min(a, Mathf.Min(b, c)) * weight;
         score += w;
     }
 

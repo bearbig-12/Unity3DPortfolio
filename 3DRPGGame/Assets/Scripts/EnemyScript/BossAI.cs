@@ -28,7 +28,7 @@ public class BossAI : EnemyAI
 
     [Header("Boss Cooldowns")]
     public float meleeCooldown = 2f;
-    public float rangedCooldown = 4f;
+    public float rangedCooldown = 3f;
     public float aoeCooldown = 6f;
 
     [Header("Boss Damage")]
@@ -44,9 +44,21 @@ public class BossAI : EnemyAI
 
     [Header("Boss Hitboxes")]
     public EnemyDamageHitbox[] meleeHitboxes;
-    public EnemyDamageHitbox[] rangedHitboxes;
     public EnemyDamageHitbox[] aoeHitboxes;
+
     public BossAttackType CurrentAttackType { get; private set; } = BossAttackType.Melee;
+
+
+    [Header("Particle Effects")]
+    public GameObject fireHandEffect;
+    ParticleSystem _phaseChangeEffect;
+    ParticleSystem _rangedFireHandEffect;
+
+    [Header("Boss Ranged Attack")]
+    public GameObject fireBallPrefab;
+    public Transform rightHandPos;
+    public float fireBallLifeTime = 5f;
+    public float aimHeightOffset = 1.0f; // 조준 높이
 
     private float _nextMeleeTime;
     private float _nextRangedTime;
@@ -55,6 +67,9 @@ public class BossAI : EnemyAI
     {
         base.InitializeStates();
         AttackState = new BossAttackState(this);
+        _rangedFireHandEffect = fireHandEffect.GetComponent<ParticleSystem>();
+        _rangedFireHandEffect.Stop();
+
     }
     protected override void OnDamaged(int damage)
     {
@@ -102,6 +117,51 @@ public class BossAI : EnemyAI
         SetHitboxes(true);
     }
 
+    public void AnimEvent_RangedAttackStart()
+    {
+        if (_rangedFireHandEffect != null)
+        {
+            _rangedFireHandEffect.Play();
+        }
+    }
+
+    public void AnimEvent_RangedAttackStop()
+    {
+        if (_rangedFireHandEffect != null)
+        {
+            // 새로운 파티클 효과는 나오지 않고 기존 파티클 효과는 자연스럽게 사라지도록
+            _rangedFireHandEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+    }
+
+    public void AnimEvent_ThrowFireBall()
+    {
+        if (fireBallPrefab != null && rightHandPos != null && _player != null)
+        {
+            Vector3 spawnPos = rightHandPos.position;
+            Vector3 targetPos = _player.position;
+            targetPos.y = _player.position.y + 1.0f; 
+
+            GameObject obj = Instantiate(fireBallPrefab, spawnPos, Quaternion.identity);
+
+            Collider FireBallColl = obj.GetComponent<Collider>();
+            Collider BossColl = GetComponent<Collider>();
+
+            // 보스 콜라이더에 닿아서 터지는 거 방지
+            if (FireBallColl != null && BossColl != null)
+            {
+                Physics.IgnoreCollision(FireBallColl, BossColl);
+            }
+
+            FireBall fireBall = obj.GetComponent<FireBall>();
+            if (fireBall != null)
+            {
+                fireBall.Launch(targetPos, fireBallLifeTime, rangedDamage);
+            }
+
+        }
+    }
+
     public override void AnimEvent_AttackEnd()
     {
         SetHitboxes(false);
@@ -113,10 +173,7 @@ public class BossAI : EnemyAI
         {
             set = meleeHitboxes;
         }
-        else if (CurrentAttackType == BossAttackType.Ranged)
-        {
-             set = rangedHitboxes;
-        }
+       
         else
         {
             set = aoeHitboxes;
