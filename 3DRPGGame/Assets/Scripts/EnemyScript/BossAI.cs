@@ -34,7 +34,7 @@ public class BossAI : EnemyAI
     [Header("Boss Damage")]
     public int meleeDamage = 10;
     public int rangedDamage = 8;
-    public int aoeDamage = 15;
+    public int aoeDamage = 5;
 
     [Header("Boss Animator Triggers")]
     public string meleeTrigger = "MeleeAttack";
@@ -44,7 +44,7 @@ public class BossAI : EnemyAI
 
     [Header("Boss Hitboxes")]
     public EnemyDamageHitbox[] meleeHitboxes;
-    public EnemyDamageHitbox[] aoeHitboxes;
+    public BossAoeHitbox aoeHitbox;
 
     public BossAttackType CurrentAttackType { get; private set; } = BossAttackType.Melee;
 
@@ -114,11 +114,17 @@ public class BossAI : EnemyAI
 
     public override void AnimEvent_AttackStart()
     {
+        SetAttackType(BossAttackType.Melee);
         SetHitboxes(true);
+    }
+    public override void AnimEvent_AttackEnd()
+    {
+        SetHitboxes(false);
     }
 
     public void AnimEvent_RangedAttackStart()
     {
+        SetAttackType(BossAttackType.Ranged);
         if (_rangedFireHandEffect != null)
         {
             _rangedFireHandEffect.Play();
@@ -162,22 +168,28 @@ public class BossAI : EnemyAI
         }
     }
 
-    public override void AnimEvent_AttackEnd()
+    public void AnimEvent_AoeStart()
     {
-        SetHitboxes(false);
+        SetAttackType(BossAttackType.Aoe);
+        SetHitbox(aoeHitbox, true);
     }
+
+    public void AnimEvent_AoeEnd()
+    {
+        SetHitbox(aoeHitbox, false);
+    }
+
     private void SetHitboxes(bool active)
     {
         EnemyDamageHitbox[] set = null;
         if (CurrentAttackType == BossAttackType.Melee)
         {
-            set = meleeHitboxes;
+            SetHitboxes(meleeHitboxes, active);
         }
        
         else
         {
-            set = aoeHitboxes;
-
+            SetHitbox(aoeHitbox, active);
         } 
 
         if (set == null) return;
@@ -189,6 +201,24 @@ public class BossAI : EnemyAI
                 set[i].SetActive(active);
             }
         }
+    }
+
+    private void SetHitboxes(EnemyDamageHitbox[] hitBoxes, bool active)
+    {
+        if (hitBoxes == null) return;
+        for (int i = 0; i < hitBoxes.Length; i++)
+        {
+            if (hitBoxes[i] != null)
+            {
+                hitBoxes[i].SetActive(active);
+            }
+        }
+    }
+
+    private void SetHitbox(BossAoeHitbox aoeHitbox, bool active)
+    {
+        if (aoeHitbox == null) return;
+        aoeHitbox.SetActive(active);
     }
 
     public void ConsumeAttackCooldown(BossAttackType type)
