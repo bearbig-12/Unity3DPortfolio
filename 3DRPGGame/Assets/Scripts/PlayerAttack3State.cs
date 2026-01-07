@@ -22,7 +22,7 @@ public class PlayerAttack3State : State
 
 
         _player._animator.SetTrigger("Attack03");
-        // 구르는 동안 이동  파라미터를 0으로 잠궈준다
+       
         _player._animator.SetFloat("MoveX", 0f);
         _player._animator.SetFloat("MoveY", 0f);
     }

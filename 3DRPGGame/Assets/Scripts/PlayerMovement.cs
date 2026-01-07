@@ -115,39 +115,51 @@ public class PlayerMovement : MonoBehaviour
             isRunning = false;
         }
 
+        // 인벤토리 창이 켜져 있는지 여부
+        bool inventoryOpen = InventorySystem.instance != null && InventorySystem.instance.IsOpen;
 
-        // 이동 입력 축 저장 (WASD/패드 등)
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
-        MoveInput = new Vector2(h, v);
-
-        if(_attackTimer > 0)
+ 
+        if (_attackTimer > 0)
         {
             _attackTimer -= Time.deltaTime;
         }
-   
-        if (Input.GetKeyDown(KeyCode.Space))
+
+        if(inventoryOpen)
         {
-            if(_currentStamina >= 15)
+            MoveInput = Vector2.zero;
+        }
+
+        if(!inventoryOpen)
+        {
+            // 이동 입력 축 저장 (WASD/패드 등)
+            float h = Input.GetAxis("Horizontal");
+            float v = Input.GetAxis("Vertical");
+            MoveInput = new Vector2(h, v);
+
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                StateMachine.ChangeState(RollState);
+                if (_currentStamina >= 15)
+                {
+                    StateMachine.ChangeState(RollState);
+
+                }
+            }
+            else if (Input.GetMouseButtonDown(0))
+            {
+                var currentState = StateMachine.GetState();
+                // 공격 중이 아닐때만 공격1로 전환, 공격 중이면 콤보로 넘어감
+                if (_currentStamina > 0 &&
+                    _attackTimer <= 0 &&
+                    !(currentState == Attack1State) &&
+                    !(currentState == Attack2State) &&
+                    !(currentState == Attack3State))
+                {
+                    StateMachine.ChangeState(Attack1State);
+                }
 
             }
         }
-        else if(Input.GetMouseButtonDown(0))
-        {
-            var currentState = StateMachine.GetState();
-            // 공격 중이 아닐때만 공격1로 전환, 공격 중이면 콤보로 넘어감
-            if(_currentStamina > 0 && 
-                _attackTimer <= 0 &&
-                !(currentState == Attack1State) && 
-                !(currentState == Attack2State) && 
-                !(currentState == Attack3State))
-            {
-                StateMachine.ChangeState(Attack1State);
-            }
-        
-        }
+       
       
     
         staminaTimer += Time.deltaTime;
