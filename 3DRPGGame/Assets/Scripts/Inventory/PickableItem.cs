@@ -8,7 +8,8 @@ public class PickableItem : MonoBehaviour
     public float intensity = 2f;
 
     // 해당 아이템의 인벤토리 아이콘 프리팹
-    [SerializeField] private GameObject _pickUpItemPrefab;
+    [SerializeField] private GameObject _pickUpItemIconPrefab;
+    [SerializeField] private InventoryItemData _itemData;
 
     private Color _originalEmission;
     private bool _playerInRange = false;
@@ -28,10 +29,10 @@ public class PickableItem : MonoBehaviour
     {
         if(_playerInRange && Input.GetKeyDown(KeyCode.E))
         {
-            if(_pickUpItemPrefab != null)
+            if(_pickUpItemIconPrefab != null && _itemData != null)
             {
                 // Add the item to the inventory
-                if(InventorySystem.instance.AddItem(_pickUpItemPrefab))
+                if(InventorySystem.instance.AddItem(_pickUpItemIconPrefab, _itemData))
                 {
                     // Pick up the item
                     Debug.Log("Item Picked Up: " + gameObject.name);

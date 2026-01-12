@@ -327,7 +327,27 @@ public class PlayerMovement : MonoBehaviour
         //}
     }
 
-   
+    public void SetWeaponHitPoints(Transform weaponInstance)
+    {
+        if (weaponInstance == null)
+        {
+            weaponRoot = null;
+            weaponTip = null;
+            return;
+        }
+
+        WeaponHitPoints points = weaponInstance.GetComponentInChildren<WeaponHitPoints>();
+        if (points != null)
+        {
+            weaponRoot = points.weaponRoot;
+            weaponTip = points.weaponTip;
+        }
+
+        if (weaponRoot == null || weaponTip == null)
+        {
+            Debug.LogWarning("Weapon hit points not found on " + weaponInstance.name);
+        }
+    }
 
 
     void OnDrawGizmosSelected()

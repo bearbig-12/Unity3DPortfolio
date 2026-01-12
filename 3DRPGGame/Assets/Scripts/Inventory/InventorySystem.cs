@@ -10,7 +10,19 @@ public class InventorySystem : MonoBehaviour
     public GameObject inventorySysyemUI;
     [SerializeField] private List<ItemSlot> _slots = new List<ItemSlot>();
     [SerializeField] private Canvas _inventoryCanvas;
+    [SerializeField] private Transform weaponEquipRoot; // 플레이어가 무기를 장착 위치
 
+    
+    private GameObject itemIconPrefab; // 인벤 아이콘 프리팹
+
+    // 플레이어 기본 무기
+    [SerializeField] private InventoryItemData starterWeaponData; 
+    [SerializeField] private GameObject starterWeaponInstance;  
+
+    private PlayerMovement _player;
+
+    private InventoryItemData _equippedWeaponData;
+    private GameObject _equippedWeaponInstance;
 
     private bool isOpen = false;
 
@@ -34,6 +46,18 @@ public class InventorySystem : MonoBehaviour
     void Start()
     {
         isOpen = false;
+        _player = FindObjectOfType<PlayerMovement>();
+
+        if (_equippedWeaponInstance == null && starterWeaponInstance != null)
+        {
+            _equippedWeaponInstance = starterWeaponInstance;
+            _equippedWeaponData = starterWeaponData;
+
+            if (_player != null)
+            {
+                _player.SetWeaponHitPoints(_equippedWeaponInstance.transform);
+            }
+        }
     }
 
     void Update()
@@ -42,9 +66,7 @@ public class InventorySystem : MonoBehaviour
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-
             cameraMovement.enabled = false;
-
             isOpen = !isOpen;
             inventorySysyemUI.SetActive(isOpen);
         }
@@ -52,16 +74,11 @@ public class InventorySystem : MonoBehaviour
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-
-
             cameraMovement.enabled = true;
-
-
             isOpen = !isOpen;
             inventorySysyemUI.SetActive(isOpen);
         }
     }
-
 
     private void CacheSlots()
     {
@@ -71,15 +88,15 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-    public bool AddItem(GameObject itemPrefab)
+    public bool AddItem(GameObject itemPrefab, InventoryItemData data)
     {
-        if(itemPrefab == null)
+        if (itemPrefab == null || data == null)
         {
-            Debug.LogWarning("Ivn Item prefab is NULL");
+            Debug.LogWarning("Inv Item prefab or data is NULL");
             return false;
         }
 
-        if(_slots == null || _slots.Count == 0)
+        if (_slots == null || _slots.Count == 0)
         {
             CacheSlots();
         }
@@ -91,38 +108,149 @@ public class InventorySystem : MonoBehaviour
                 continue;
             }
 
-            // 빈 슬롯에 아이템 아이콘 만들기
-            GameObject instance = Instantiate(itemPrefab, slot.transform); 
+            GameObject instance = Instantiate(itemPrefab, slot.transform);
             RectTransform rect = instance.GetComponent<RectTransform>();
 
             if (rect != null)
             {
                 rect.localPosition = Vector3.zero;
                 rect.localRotation = Quaternion.identity;
-                rect.localScale = instance.transform.localScale;
+                rect.localScale = Vector3.one;
             }
-          
+
+            InventoryItemUI itemUI = instance.GetComponent<InventoryItemUI>();
+
+            if (itemUI != null)
+            {
+                itemUI.Init(data);
+            }
 
             DragDrop dragDrop = instance.GetComponent<DragDrop>();
-            if(dragDrop != null)
+
+            if (dragDrop != null)
             {
-                if(_inventoryCanvas == null)
+                if (_inventoryCanvas == null)
                 {
-                    if(inventorySysyemUI != null)
-                    {
-                        _inventoryCanvas = inventorySysyemUI.GetComponent<Canvas>();
-                    }
-                    if(_inventoryCanvas == null)
-                    {
-                        _inventoryCanvas = FindObjectOfType<Canvas>();
-                    }
+                    Debug.LogWarning("Inventory Canvas is not assigned.");
                 }
-                dragDrop.SetCanvas(_inventoryCanvas);
+                else
+                {
+                    dragDrop.SetCanvas(_inventoryCanvas);
+                }
             }
+
             return true;
         }
-        Debug.LogWarning("Ivn No empty slot available");
+
+        Debug.LogWarning("Inv no empty slot available.");
         return false;
     }
- 
+
+    public void UseItem(InventoryItemUI itemUI)
+    {
+        if (itemUI == null || itemUI.ItemData == null) return;
+
+        InventoryItemData data = itemUI.ItemData;
+
+        if (data.itemType == InventoryItemType.Consumable)
+        {
+            if (_player != null)
+            {
+                // 플레이어 회복
+                // 스테미나 회복
+            }
+
+            Destroy(itemUI.gameObject);
+        }
+        else if (data.itemType == InventoryItemType.Weapon)
+        {
+            EquipWeaponFromItemUI(itemUI);
+        }
+    }
+
+    public void DropItem(InventoryItemUI itemUI)
+    {
+        if (itemUI == null) return;
+        Destroy(itemUI.gameObject);
+    }
+
+    private void EquipWeaponFromItemUI(InventoryItemUI itemUI)
+    {
+        if (weaponEquipRoot == null) return;
+
+        InventoryItemData newData = itemUI.ItemData;
+        Transform slotTransform = itemUI.transform.parent;
+
+        InventoryItemData oldData = _equippedWeaponData;
+
+        EquipWeaponPrefab(newData.weaponPrefab);
+        _equippedWeaponData = newData;
+
+        Destroy(itemUI.gameObject);
+
+        if (oldData != null && slotTransform != null)
+        {
+            CreateIconInSlot(oldData, slotTransform);
+        }
+    }
+
+    private void EquipWeaponPrefab(GameObject weaponPrefab)
+    {
+        if (weaponPrefab == null) return;
+
+        if (_equippedWeaponInstance != null)
+        {
+            Destroy(_equippedWeaponInstance);
+        }
+
+        _equippedWeaponInstance = Instantiate(
+            weaponPrefab,
+            weaponEquipRoot.position,
+            weaponEquipRoot.rotation,
+            weaponEquipRoot
+        );
+
+        _equippedWeaponInstance.transform.localPosition = Vector3.zero;
+        _equippedWeaponInstance.transform.localScale = Vector3.one;
+
+
+        if (_player != null)
+        {
+            _player.SetWeaponHitPoints(_equippedWeaponInstance.transform);
+        }
+    }
+
+    private void CreateIconInSlot(InventoryItemData data, Transform slotTransform)
+    {
+        if (itemIconPrefab == null) return;
+
+        GameObject icon = Instantiate(itemIconPrefab, slotTransform);
+        ApplyRectDefaults(icon);
+
+        InventoryItemUI itemUI = icon.GetComponent<InventoryItemUI>();
+        if (itemUI != null) itemUI.Init(data);
+
+        DragDrop dragDrop = icon.GetComponent<DragDrop>();
+        if (dragDrop != null && _inventoryCanvas != null)
+        {
+            dragDrop.SetCanvas(_inventoryCanvas);
+        }
+    }
+
+    private void ApplyRectDefaults(GameObject instance)
+    {
+        RectTransform rect = instance.GetComponent<RectTransform>();
+        if (rect != null)
+        {
+            rect.localPosition = Vector3.zero;
+            rect.localRotation = Quaternion.identity;
+            rect.localScale = Vector3.one;
+        }
+        else
+        {
+            instance.transform.localPosition = Vector3.zero;
+            instance.transform.localRotation = Quaternion.identity;
+            instance.transform.localScale = Vector3.one;
+        }
+    }
 }
