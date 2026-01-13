@@ -337,6 +337,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         WeaponHitPoints points = weaponInstance.GetComponentInChildren<WeaponHitPoints>();
+
         if (points != null)
         {
             weaponRoot = points.weaponRoot;
