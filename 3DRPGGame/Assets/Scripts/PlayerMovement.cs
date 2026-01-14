@@ -27,6 +27,9 @@ public class PlayerMovement : MonoBehaviour
     private bool _attackActive = false;
     private HashSet<EnemyAI> _enemiesHit = new HashSet<EnemyAI>();
 
+    private Vector3 _velocity;
+    public float gravity = -20f;
+
     public Vector2 MoveInput { get; private set; }
 
     [Header("PlayerInfo")]
@@ -213,12 +216,18 @@ public class PlayerMovement : MonoBehaviour
 
         Vector3 moveDirection = forward * MoveInput.y + right * MoveInput.x;
 
-        // CharacterController로 실제 이동
-        _characterController.Move(moveDirection.normalized * moveSpeed * Time.deltaTime);
+        if (_characterController.isGrounded && _velocity.y < 0f)
+        {
+            _velocity.y = -2f; // 바닥 붙이기
+        }
 
-        //// 애니메이션 블렌드 값 계산 (Idle/Walk/Run에서 다르게 사용 가능)
-        //float percent = (isRunning ? 1.0f : 0.5f) * moveDirection.magnitude;
-        //_animator.SetFloat("Blend", percent, 0.1f, Time.deltaTime);
+        _velocity.y += gravity * Time.deltaTime;
+
+        Vector3 FinalMove = (moveDirection.normalized * moveSpeed) + _velocity;
+
+        // CharacterController로 실제 이동
+        _characterController.Move(FinalMove * Time.deltaTime);
+
 
         // 애니메이션 파라미터 설정
         float speedMul = isRunning ? 1.0f : 0.5f;
