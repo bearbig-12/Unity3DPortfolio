@@ -47,7 +47,7 @@ public static class FuzzyAttack
 
         // player°¡ À¯¸®
         RuleHard(playerAdv, staLow);
-        RuleBasic(playerAdv, staMid);
+        RuleHard(playerAdv, staMid);
         RuleBasic(playerAdv, staHigh);
 
         float total = hardScore + basicScore;

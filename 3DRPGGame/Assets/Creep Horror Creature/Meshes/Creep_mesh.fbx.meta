@@ -424,7 +424,7 @@ ModelImporter:
       takeName: Creep|Punch_Action
       internalID: 7344986953279484206
       firstFrame: 0
-      lastFrame: 31
+      lastFrame: 60
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -451,7 +451,7 @@ ModelImporter:
         floatParameter: 0
         intParameter: 0
         messageOptions: 0
-      - time: 0.90391463
+      - time: 0.66281873
         functionName: AnimEvent_AttackEnd
         data: 
         objectReferenceParameter: {instanceID: 0}

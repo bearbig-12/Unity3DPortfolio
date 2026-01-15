@@ -19,8 +19,8 @@ public class EnemyAI : MonoBehaviour
     public Vector3 healthBarOffset = new Vector3(0, 2.5f, 0);
 
     [Header("Range")]
-    public float alertRange = 10f; // Idle -> Patrol
-    public float fovRange = 10f; // Patrol -> Chase
+    public float alertRange = 15f; // Idle -> Patrol
+    public float fovRange = 8f; // Patrol -> Chase
     public float fovAngle = 90f; // Enemy 시야각
     public float attackRange = 2f; // Chase -> Attack 
     public float returnRange = 30f; // patrol -> Idle
@@ -273,37 +273,37 @@ public class EnemyAI : MonoBehaviour
 
 
 
-    //void OnDrawGizmos()
-    //{
-    //    // alertRange (Idle -> Patrol)
-    //    Gizmos.color = Color.cyan ;
-    //    Gizmos.DrawWireSphere(transform.position, alertRange);
+    void OnDrawGizmos()
+    {
+        // alertRange (Idle -> Patrol)
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, alertRange);
 
-    //    // fovRange (Patrol -> Chase �Ÿ�)
-    //    Gizmos.color = Color.red;
-    //    Gizmos.DrawWireSphere(transform.position, fovRange);
+        // fovRange (Patrol -> Chase �Ÿ�)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, fovRange);
 
-    //    // FOV ���� ǥ�� (��/�� ��輱)
-    //    Vector3 origin = transform.position + Vector3.up * 1.0f;
+        // FOV ���� ǥ�� (��/�� ��輱)
+        Vector3 origin = transform.position + Vector3.up * 1.0f;
 
-    //    float half = fovAngle * 0.5f;
-    //    Vector3 leftDir = Quaternion.Euler(0f, -half, 0f) * transform.forward;
-    //    Vector3 rightDir = Quaternion.Euler(0f, half, 0f) * transform.forward;
+        float half = fovAngle * 0.5f;
+        Vector3 leftDir = Quaternion.Euler(0f, -half, 0f) * transform.forward;
+        Vector3 rightDir = Quaternion.Euler(0f, half, 0f) * transform.forward;
 
-    //    Gizmos.DrawLine(origin, origin + leftDir.normalized * fovRange);
-    //    Gizmos.DrawLine(origin, origin + rightDir.normalized * fovRange);
+        Gizmos.DrawLine(origin, origin + leftDir.normalized * fovRange);
+        Gizmos.DrawLine(origin, origin + rightDir.normalized * fovRange);
 
-    //    // (����) �þ� ��ä���� ���� �׷��ֱ� (����׿�)
-    //    int steps = 24;
-    //    Vector3 prev = origin + leftDir.normalized * fovRange;
-    //    for (int i = 1; i <= steps; i++)
-    //    {
-    //        float t = (float)i / steps;
-    //        float ang = Mathf.Lerp(-half, half, t);
-    //        Vector3 dir = Quaternion.Euler(0f, ang, 0f) * transform.forward;
-    //        Vector3 next = origin + dir.normalized * fovRange;
-    //        Gizmos.DrawLine(prev, next);
-    //        prev = next;
-    //    }
-    //}
+        // (����) �þ� ��ä���� ���� �׷��ֱ� (����׿�)
+        int steps = 24;
+        Vector3 prev = origin + leftDir.normalized * fovRange;
+        for (int i = 1; i <= steps; i++)
+        {
+            float t = (float)i / steps;
+            float ang = Mathf.Lerp(-half, half, t);
+            Vector3 dir = Quaternion.Euler(0f, ang, 0f) * transform.forward;
+            Vector3 next = origin + dir.normalized * fovRange;
+            Gizmos.DrawLine(prev, next);
+            prev = next;
+        }
+    }
 }
