@@ -35,20 +35,36 @@ public static class FuzzyAttack
             basicScore += w;
         }
 
-        // enemy가 유리
-        RuleHard(enemyAdv, staLow);
-        RuleHard(enemyAdv, staMid);
-        RuleHard(enemyAdv, staHigh);
+        //// enemy가 유리
+        //RuleHard(enemyAdv, staLow);
+        //RuleHard(enemyAdv, staMid);
+        //RuleHard(enemyAdv, staHigh);
 
-        // HP 차이 비슷
-        RuleHard(even, staLow);
+        //// HP 차이 비슷
+        //RuleHard(even, staLow);
+        //RuleBasic(even, staMid);
+        //RuleBasic(even, staHigh);
+
+        //// player가 유리
+        //RuleHard(playerAdv, staLow);
+        //RuleHard(playerAdv, staMid);
+        //RuleBasic(playerAdv, staHigh);
+
+
+        // enemy가 유리 -> 기본 공격
+        RuleBasic(enemyAdv, staLow);
+        RuleBasic(enemyAdv, staMid);
+        RuleBasic(enemyAdv, staHigh);
+
+        // HP 차이 비슷 (유지)
+        RuleBasic(even, staLow);
         RuleBasic(even, staMid);
-        RuleBasic(even, staHigh);
+        RuleHard(even, staHigh);
 
-        // player가 유리
+        // player가 유리 -> 강공격
         RuleHard(playerAdv, staLow);
         RuleHard(playerAdv, staMid);
-        RuleBasic(playerAdv, staHigh);
+        RuleHard(playerAdv, staHigh);
 
         float total = hardScore + basicScore;
 
