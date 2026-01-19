@@ -5,6 +5,8 @@ public class ShopKepper : MonoBehaviour
 {
     public bool playerInRange = false;
     public bool isTalking = false;
+    [SerializeField] private GameObject interactUI;
+    [SerializeField] private Vector3 interactUIOffset = new Vector3(0f, 2.2f, 0f);
 
     private enum ShopState
     {
@@ -23,6 +25,13 @@ public class ShopKepper : MonoBehaviour
     public GameObject sellPanelUI;
 
     private ShopState state = ShopState.Closed;
+
+    private bool isShop = false;
+
+    public bool IsShop
+    {
+        get { return isShop; }
+    }
 
     private void Start()
     {
@@ -70,6 +79,17 @@ public class ShopKepper : MonoBehaviour
         }
     }
 
+    private void LateUpdate()
+    {
+        if (interactUI == null)
+        {
+            return;
+        }
+
+        interactUI.transform.position = transform.position + interactUIOffset;
+        interactUI.transform.forward = Camera.main.transform.forward;
+    }
+
     public void Interact()
     {
         SetState(ShopState.Dialog);
@@ -108,11 +128,25 @@ public class ShopKepper : MonoBehaviour
     private void SetState(ShopState nextState)
     {
         state = nextState;
-        isTalking = state != ShopState.Closed;
+        if (state != ShopState.Closed)
+        {
+            isTalking = true;
+        }
+        else
+        {
+            isTalking = false;
+        }
 
-        bool isOpen = state != ShopState.Closed;
-        Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
-        Cursor.visible = isOpen;
+        if (state != ShopState.Closed)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
 
         switch (state)
         {
@@ -120,22 +154,44 @@ public class ShopKepper : MonoBehaviour
                 HideDialogUI();
                 buyPanelUI.SetActive(false);
                 sellPanelUI.SetActive(false);
+                isShop = false;
+
                 break;
             case ShopState.Dialog:
                 ShowDialogUI();
                 buyPanelUI.SetActive(false);
                 sellPanelUI.SetActive(false);
+                isShop = true;
+
                 break;
             case ShopState.Buy:
                 HideDialogUI();
                 buyPanelUI.SetActive(true);
                 sellPanelUI.SetActive(false);
+                isShop = true;
+
                 break;
             case ShopState.Sell:
                 HideDialogUI();
                 buyPanelUI.SetActive(false);
                 sellPanelUI.SetActive(true);
+                isShop = true;
+
                 break;
+        }
+
+        UpdateInteractUI();
+
+        if (InventorySystem.instance != null)
+        {
+            if (state == ShopState.Buy || state == ShopState.Sell)
+            {
+                InventorySystem.instance.SetInventoryOpen(true, false);
+            }
+            else
+            {
+                InventorySystem.instance.SetInventoryOpen(false, false);
+            }
         }
     }
 
@@ -144,6 +200,7 @@ public class ShopKepper : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             playerInRange = true;
+            UpdateInteractUI();
         }
     }
 
@@ -156,6 +213,21 @@ public class ShopKepper : MonoBehaviour
             {
                 StopInteract();
             }
+            else
+            {
+                UpdateInteractUI();
+            }
         }
+    }
+
+    private void UpdateInteractUI()
+    {
+        if (interactUI == null)
+        {
+            return;
+        }
+
+        bool shouldShow = playerInRange && state == ShopState.Closed;
+        interactUI.SetActive(shouldShow);
     }
 }

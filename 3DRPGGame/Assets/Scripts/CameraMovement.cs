@@ -25,6 +25,9 @@ public class CameraMovement : MonoBehaviour
     public float lockOnRadius = 15f;
     public LayerMask lockOnLayer;
     private Transform lockOnTarget;
+
+
+    private ShopKepper _shop;
     public bool IsLockOn
     {
         get
@@ -85,12 +88,21 @@ public class CameraMovement : MonoBehaviour
         // Normalize initial camera direction
         dirNormalized = realCamera.localPosition.normalized;
         finalDistance = realCamera.localPosition.magnitude;
+
+        _shop = FindObjectOfType<ShopKepper>(); 
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        bool inventoryOpen = InventorySystem.instance != null && InventorySystem.instance.IsOpen;
+
+        if ((_shop != null && _shop.IsShop) || inventoryOpen)
+        {
+            return;
+        }
+
+
         if (!IsLockOn)
         {
             rotX += -Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
@@ -121,6 +133,13 @@ public class CameraMovement : MonoBehaviour
 
     void LateUpdate()
     {
+
+        bool inventoryOpen = InventorySystem.instance != null && InventorySystem.instance.IsOpen;
+
+        if ((_shop != null && _shop.IsShop) || inventoryOpen)
+        {
+            return;
+        }
         transform.position = Vector3.MoveTowards(transform.position, objectToFollow.position, followSpeed * Time.deltaTime);
 
         finalDir = transform.TransformDirection(dirNormalized);

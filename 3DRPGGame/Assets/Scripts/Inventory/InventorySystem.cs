@@ -62,21 +62,9 @@ public class InventorySystem : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I) && !isOpen)
+        if (Input.GetKeyDown(KeyCode.I))
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-            cameraMovement.enabled = false;
-            isOpen = !isOpen;
-            inventorySysyemUI.SetActive(isOpen);
-        }
-        else if (Input.GetKeyDown(KeyCode.I) && isOpen)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-            cameraMovement.enabled = true;
-            isOpen = !isOpen;
-            inventorySysyemUI.SetActive(isOpen);
+            SetInventoryOpen(!isOpen, true);
         }
     }
 
@@ -85,6 +73,28 @@ public class InventorySystem : MonoBehaviour
         if (_slots == null)
         {
             _slots = new List<ItemSlot>();
+        }
+    }
+
+    public void SetInventoryOpen(bool open, bool controlCursor)
+    {
+        if (isOpen == open)
+        {
+            return;
+        }
+
+        isOpen = open;
+        inventorySysyemUI.SetActive(isOpen);
+
+        if (cameraMovement != null)
+        {
+            cameraMovement.enabled = !isOpen;
+        }
+
+        if (controlCursor)
+        {
+            Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
+            Cursor.visible = isOpen;
         }
     }
 
