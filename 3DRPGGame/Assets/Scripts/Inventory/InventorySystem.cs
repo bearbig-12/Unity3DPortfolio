@@ -12,8 +12,8 @@ public class InventorySystem : MonoBehaviour
     [SerializeField] private Canvas _inventoryCanvas;
     [SerializeField] private Transform weaponEquipRoot; // 플레이어가 무기를 장착 위치
 
-    
-    private GameObject itemIconPrefab; // 인벤 아이콘 프리팹
+
+    [SerializeField]  private GameObject itemIconPrefab; // 인벤 아이콘 프리팹
 
     // 플레이어 기본 무기
     [SerializeField] private InventoryItemData starterWeaponData; 
@@ -261,6 +261,43 @@ public class InventorySystem : MonoBehaviour
             instance.transform.localPosition = Vector3.zero;
             instance.transform.localRotation = Quaternion.identity;
             instance.transform.localScale = Vector3.one;
+        }
+    }
+
+    public List<string> GetSavedItmeIDs()
+    {
+        List<string> ids = new List<string>();
+
+        foreach (var slot in _slots)
+        {
+            if (slot == null || slot.Item == null) continue;
+            InventoryItemUI ui = slot.Item.GetComponent<InventoryItemUI>();
+            if(ui != null && ui.ItemData != null)
+            {
+                ids.Add(ui.ItemData.GetStableId());
+            }
+        }
+
+        return ids;
+    }
+
+    public void LoadFromSavedIds(List<string> ids)
+    {
+        if (ids == null) return;
+        if(itemIconPrefab == null)
+        {
+            Debug.LogWarning("itemIconPrefab is not assigned.");
+            return;
+        }
+
+
+        foreach(var id in ids)
+        {
+            InventoryItemData data = InventoryItemDatabase.Instance.GetById(id);
+            if (data != null)
+            {
+                AddItem(itemIconPrefab, data);
+            }
         }
     }
 }

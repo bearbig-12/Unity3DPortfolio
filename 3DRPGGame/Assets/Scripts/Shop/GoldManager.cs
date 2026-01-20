@@ -73,4 +73,10 @@ public class GoldManager : MonoBehaviour
             goldText.text = Gold.ToString();
         }
     }
+
+    public void SetGold(int amount)
+    {
+        Gold = amount;
+        UpdateUI();
+    }
 }

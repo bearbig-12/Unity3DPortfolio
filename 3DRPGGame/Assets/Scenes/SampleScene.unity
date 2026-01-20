@@ -7491,6 +7491,110 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: 6bb87a11c15512945baf00bb0e26e4bd, type: 3}
   m_PrefabInstance: {fileID: 2102028106}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &239091080
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 239091086}
+  - component: {fileID: 239091085}
+  - component: {fileID: 239091084}
+  - component: {fileID: 239091083}
+  - component: {fileID: 239091082}
+  - component: {fileID: 239091081}
+  m_Layer: 0
+  m_Name: GameSystems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &239091081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239091080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1c9cb42456f8764b9430962f0e14a6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  progress: {fileID: 239091084}
+  skillTree: {fileID: 239091083}
+  inventory: {fileID: 1866085201}
+  goldManager: {fileID: 301352130}
+--- !u!114 &239091082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239091080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1134ec3107458c044941bd12761dd7a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &239091083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239091080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3ffbb46e2532fc478156ae42bdfd32f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  database: {fileID: 239091085}
+  progress: {fileID: 239091084}
+--- !u!114 &239091084
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239091080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98b4ec0bb2fa25f41a3c08ed662444d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Level: 1
+  SkillPoints: 0
+--- !u!114 &239091085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239091080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79ed32f7eb888f24bb88623d1332b3ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &239091086
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 239091080}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 182.69803, y: 86.36693, z: -37.270477}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &245107603 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400000, guid: ac97007c9d09db94db05b0a5bb306b6d, type: 3}
@@ -61519,6 +61623,7 @@ MonoBehaviour:
   - {fileID: 452013340}
   _inventoryCanvas: {fileID: 1726862011}
   weaponEquipRoot: {fileID: 1730669514}
+  itemIconPrefab: {fileID: 3444415691092071780, guid: 2e23f0c3eedb3a5449c6d8f064344e23, type: 3}
   starterWeaponData: {fileID: 11400000, guid: 374b65b87ac3dab4cb6e2b624661c1cb, type: 2}
   starterWeaponInstance: {fileID: 495780549}
 --- !u!4 &1866085202
@@ -70449,3 +70554,4 @@ SceneRoots:
   - {fileID: 648719472}
   - {fileID: 1376006700}
   - {fileID: 5506852031960622491}
+  - {fileID: 239091086}

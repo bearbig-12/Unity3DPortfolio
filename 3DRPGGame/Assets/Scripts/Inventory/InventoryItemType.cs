@@ -13,6 +13,20 @@ public class InventoryItemData : ScriptableObject
     public Sprite icon;
     public InventoryItemType itemType;
 
+    [Header("Identity")]
+    public string itemId;
+
+    public string GetStableId()
+    {
+        if (!string.IsNullOrEmpty(itemId))
+        {
+            return itemId;
+        }
+
+        return itemName;
+    }
+
+
     [Header("Price")]
     public int buyPrice = 0;
     public int sellPrice = 0;

@@ -1,0 +1,50 @@
+{
+  "skills": [
+    {
+      "id": "weapon_enhancement",
+      "name": "Weapon Enhancement",
+      "parentId": "",
+      "unlockLevel": 1,
+      "cost": 1,
+      "maxRank": 1,
+      "description": "Enhance the currently equipped weapon"
+    },
+    {
+      "id": "energy_ball",
+      "name": "Energy Ball",
+      "parentId": "weapon_enhancement",
+      "unlockLevel": 2,
+      "cost": 1,
+      "maxRank": 1,
+      "description": "Fire an energy ball forward."
+    },
+    {
+      "id": "power_slash",
+      "name": "Power Slash",
+      "parentId": "weapon_enhancement",
+      "unlockLevel": 2,
+      "cost": 1,
+      "maxRank": 1,
+      "description": "Strike the enemy with a powerful blow."
+    },
+    {
+      "id": "advanced_energy_ball",
+      "name": "Advanced Energy Ball",
+      "parentId": "energy_ball",
+      "unlockLevel": 3,
+      "cost": 1,
+      "maxRank": 1,
+      "description": "Fire a more powerful energy ball forward."
+    },
+    {
+      "id": "advanced_power_slash",
+      "name": "Advanced Power Slash",
+      "parentId": "power_slash",
+      "unlockLevel": 3,
+      "cost": 1,
+      "maxRank": 1,
+      "description": "Strike the enemy with an even more powerful blow."
+    }
+
+  ]
+}
