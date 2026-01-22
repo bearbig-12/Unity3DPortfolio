@@ -3,7 +3,7 @@ using UnityEngine;
 public class PlayerProgress : MonoBehaviour
 {
     public int Level = 1;
-    public int SkillPoints = 0;
+    public int SkillPoints = 1;
 
     public void AddSkillPoints(int amount)
     {

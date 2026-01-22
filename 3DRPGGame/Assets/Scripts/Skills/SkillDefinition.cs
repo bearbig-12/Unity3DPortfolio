@@ -10,6 +10,8 @@ public class SkillDefinition
     public int unlockLevel;
     public int cost;
     public int maxRank = 1;
+    public float cooldown;
+    public int damage;
     public string description;
 }
 
