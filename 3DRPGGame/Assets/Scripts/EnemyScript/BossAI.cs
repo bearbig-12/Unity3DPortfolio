@@ -63,6 +63,14 @@ public class BossAI : EnemyAI
     private float _nextMeleeTime;
     private float _nextRangedTime;
     private float _nextAoeTime;
+
+    protected override void Start()
+    {
+        base.Start();
+        expReward = 100;
+    }
+
+
     protected override void InitializeStates()
     {
         base.InitializeStates();
