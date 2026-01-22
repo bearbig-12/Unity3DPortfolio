@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     public CharacterController _characterController;
     CameraMovement _cam;
 
+    private bool _baseStatsCached = false;
 
     public float speed = 3.0f;
     public float runSpeed = 10.0f;
@@ -36,11 +37,13 @@ public class PlayerMovement : MonoBehaviour
     public int _maxHealth = 100;
     public int _currentHealth;
     public HealthBar _healthbar;
+    private int _baseMaxHealth;
 
     [Header("Stamina Info")]
     public int _maxStamina = 100;
     public int _currentStamina;
     public StaminaBar _staminaBar;
+    private int _baseMaxStamina;
 
     float staminaTick = 1.0f;      // 1초마다 회복/감소
     float staminaTimer = 0.0f;
@@ -51,6 +54,7 @@ public class PlayerMovement : MonoBehaviour
     public float bladeRadius = 0.12f; // 칼 두께
     public LayerMask enemyLayer;
     public int attackDamage = 20;
+    private int _baseAttackDamage;
     // State
     public StateMachine StateMachine { get; private set; }
     public PlayerIdleState IdleState { get; private set; }
@@ -67,6 +71,8 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        CacheBaseStats();
+
         _animator = GetComponent<Animator>();
         _camera = Camera.main;
         _characterController = this.GetComponent<CharacterController>();
@@ -357,6 +363,58 @@ public class PlayerMovement : MonoBehaviour
         {
             Debug.LogWarning("Weapon hit points not found on " + weaponInstance.name);
         }
+    }
+
+
+    private void CacheBaseStats()
+    {
+        if (_baseStatsCached) return;
+        _baseMaxHealth = _maxHealth;
+        _baseMaxStamina = _maxStamina;
+        _baseAttackDamage = attackDamage;
+        _baseStatsCached = true;
+    }
+
+    public void ApplyLevelUpBonus(int healthBonus, int staminaBonus, int attackBonus)
+    {
+        CacheBaseStats();
+
+        _maxHealth += healthBonus;
+        _currentHealth += healthBonus;
+
+        if (_healthbar != null)
+        {
+            _healthbar.SetMaxHealth(_maxHealth);
+            _healthbar.SetHealth(_currentHealth);
+        }
+
+        _maxStamina += staminaBonus;
+        _currentStamina += staminaBonus;
+
+        if (_staminaBar != null)
+        {
+            _staminaBar.SetMaxStamina(_maxStamina);
+            _staminaBar.SetStamina(_currentStamina);
+        }
+
+        attackDamage += attackBonus;
+    }
+
+    public void ApplyLevelFromProgress(int level, int healthPerLevel, int staminaPerLevel, int attackPerLevel)
+    {
+        CacheBaseStats();
+
+        int bonusLevels = Mathf.Max(0, level - 1);
+
+        _maxHealth = _baseMaxHealth + bonusLevels * healthPerLevel;
+        _maxStamina = _baseMaxStamina + bonusLevels * staminaPerLevel;
+        attackDamage = _baseAttackDamage + bonusLevels * attackPerLevel;
+
+        _currentHealth = _maxHealth;
+        _currentStamina = _maxStamina;
+
+        if (_healthbar != null) _healthbar.SetMaxHealth(_maxHealth);
+        if (_staminaBar != null) _staminaBar.SetMaxStamina(_maxStamina);
     }
 
 

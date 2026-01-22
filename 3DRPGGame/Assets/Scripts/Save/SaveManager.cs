@@ -26,7 +26,10 @@ public class SaveManager : MonoBehaviour
     {
         SaveData data = new SaveData();
 
-        if(progress != null)
+        data.currentExp = progress.CurrentExp;
+
+
+        if (progress != null)
         {
             data.playerLevel = progress.Level;
             data.skillPoints = progress.SkillPoints;
@@ -48,6 +51,7 @@ public class SaveManager : MonoBehaviour
             data.inventoryItemIds = inventory.GetSavedItmeIDs();
         }
 
+
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(SavePath, json);
         Debug.Log("Saved to: " + SavePath);
@@ -63,6 +67,9 @@ public class SaveManager : MonoBehaviour
 
         string json = File.ReadAllText(SavePath);
         SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+        progress.ApplyLoadedData(data.playerLevel, data.currentExp);
+        progress.SkillPoints = data.skillPoints;
 
         if (progress != null)
         {

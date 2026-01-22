@@ -52,6 +52,9 @@ public class EnemyAI : MonoBehaviour
     public float homeArriveDist = 1.0f;
 
 
+    [Header("Rewards")]
+    public int expReward = 30;
+    private PlayerProgress _progress;
 
 
     public StateMachine StateMachine { get; private set; }
@@ -95,6 +98,8 @@ public class EnemyAI : MonoBehaviour
         {
             _player = _p.transform;
         }
+
+        _progress = FindObjectOfType<PlayerProgress>();
 
         InitializeStates();
 
@@ -228,6 +233,9 @@ public class EnemyAI : MonoBehaviour
 
         Collider col = GetComponentInChildren<Collider>();
         if (col != null) col.enabled = false;
+
+
+        _progress.AddEXP(expReward);
 
         StartCoroutine(DespawnAfter(2f));
     }
