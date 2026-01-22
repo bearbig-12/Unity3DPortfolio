@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static PlayerMovement;
 
 public class InventorySystem : MonoBehaviour
 {
@@ -166,8 +167,14 @@ public class InventorySystem : MonoBehaviour
         {
             if (_player != null)
             {
-                // 플레이어 회복
-                // 스테미나 회복
+                if (data.consumableType == ConsumableType.HP)
+                {
+                    _player.Heal(HealType.HP, data.healAmount);
+                }
+                else if (data.consumableType == ConsumableType.Stamina)
+                {
+                    _player.Heal(HealType.Stamina, data.healAmount);
+                }
             }
 
             Destroy(itemUI.gameObject);

@@ -6,6 +6,12 @@ public enum InventoryItemType
     Consumable
 }
 
+public enum ConsumableType
+{
+    HP,
+    Stamina
+}
+
 [CreateAssetMenu(menuName = "Inventory/ItemData")]
 public class InventoryItemData : ScriptableObject
 {
@@ -33,6 +39,7 @@ public class InventoryItemData : ScriptableObject
 
     [Header("Consumable")]
     public int healAmount = 50;
+    public ConsumableType consumableType = ConsumableType.HP;
 
     [Header("Weapon")]
     public GameObject weaponPrefab;

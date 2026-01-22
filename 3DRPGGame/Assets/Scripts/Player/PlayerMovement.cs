@@ -55,6 +55,14 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask enemyLayer;
     public int attackDamage = 20;
     private int _baseAttackDamage;
+
+
+    public enum HealType
+    {
+        HP,
+        Stamina
+    }
+
     // State
     public StateMachine StateMachine { get; private set; }
     public PlayerIdleState IdleState { get; private set; }
@@ -417,6 +425,22 @@ public class PlayerMovement : MonoBehaviour
         if (_staminaBar != null) _staminaBar.SetMaxStamina(_maxStamina);
     }
 
+
+    public void Heal(HealType type, int amount)
+    {
+        if (amount <= 0) return;
+
+        if (type == HealType.HP)
+        {
+            _currentHealth += amount;
+            if (_currentHealth > _maxHealth) _currentHealth = _maxHealth;
+            if (_healthbar != null) _healthbar.SetHealth(_currentHealth);
+        }
+        else if (type == HealType.Stamina)
+        {
+            ChangeStamina(amount);
+        }
+    }
 
     void OnDrawGizmosSelected()
     {
