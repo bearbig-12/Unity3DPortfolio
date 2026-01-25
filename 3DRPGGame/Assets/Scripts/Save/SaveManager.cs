@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using System.Collections;
 
 public class SaveManager : MonoBehaviour
 {
@@ -48,7 +49,7 @@ public class SaveManager : MonoBehaviour
 
         if(inventory != null)
         {
-            data.inventoryItemIds = inventory.GetSavedItmeIDs();
+            data.inventoryStacks = inventory.GetSavedStacks();
         }
 
 
@@ -89,9 +90,21 @@ public class SaveManager : MonoBehaviour
 
         if (inventory != null)
         {
-            inventory.LoadFromSavedIds(data.inventoryItemIds);
+            StartCoroutine(LoadInventoryAfterClear(data));
         }
 
+
+
         Debug.Log("Loaded save.");
+    }
+
+    // 같은 프레임에 아이템 삭제 및 로드가 일어나면 인벤토리에 아무것도 안뜨게된다.
+    private IEnumerator LoadInventoryAfterClear(SaveData data)
+    {
+        //기존 아이템을 먼저 삭제한다
+        inventory.ClearInventory();
+        yield return null;
+        // 이제 빈 슬롯에 저장된 스택을 복원
+        inventory.LoadFromSavedStacks(data.inventoryStacks);
     }
 }

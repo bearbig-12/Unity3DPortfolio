@@ -19,8 +19,7 @@ public class ExpBar : MonoBehaviour
     public void SetMaxExp(int exp)
     {
         _slider.maxValue = exp;
-        _slider.value = exp;
-        _targetValue = exp;
+    
     }
 
     public void SetExp(int exp)

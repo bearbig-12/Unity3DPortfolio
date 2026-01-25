@@ -4,7 +4,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 
-public class SkillNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+public class SkillNodeUI : MonoBehaviour,
+    IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler,
+    IBeginDragHandler, IDragHandler, IEndDragHandler
 {
 
     [SerializeField] private string skillId;
@@ -13,8 +15,11 @@ public class SkillNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     [SerializeField] private Color availableColor = Color.white;
     [SerializeField] private Color learnedColor = new Color(1f, 0.8f, 0.2f, 1f);
     [SerializeField] private TMP_Text rankText;
+    [SerializeField] private Canvas canvas;
 
     private SkillUIController _controller;
+    private GameObject _dragIcon;
+
 
     public void SetController(SkillUIController controller)
     {
@@ -82,4 +87,46 @@ public class SkillNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         if (_controller == null) return;
         _controller.TryLearn(skillId);
     }
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (!_controller.SkillTree.IsLearned(skillId)) return;
+
+        if (canvas == null) canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+
+        _dragIcon = new GameObject("SkillDragIcon");
+        _dragIcon.transform.SetParent(canvas.transform, false);
+
+        var image = _dragIcon.AddComponent<Image>();
+        if (icon != null) image.sprite = icon.sprite;
+
+        var cg = _dragIcon.AddComponent<CanvasGroup>();
+        cg.blocksRaycasts = false;
+        cg.alpha = 0.8f;
+
+        var draggedSkill = _dragIcon.AddComponent<CurrentDragSkill>();
+        draggedSkill.skillId = skillId;
+
+        DragDrop.itemBeingDragged = _dragIcon;
+        _dragIcon.transform.position = eventData.position;
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (_dragIcon != null)
+        {
+            _dragIcon.transform.position = eventData.position;
+        }
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        DragDrop.itemBeingDragged = null;
+
+        if (_dragIcon != null)
+        {
+            Destroy(_dragIcon);
+        }
+    }
+
 }

@@ -17,12 +17,24 @@ public class FireBall : MonoBehaviour
     public LayerMask obstacleMask;   // Wall/Ground
 
 
+    // player cast¿ë
+    [SerializeField] private bool damagePlayer = true;
+    [SerializeField] private LayerMask enemyMask;
+
     void Awake()
     {
         _rb = GetComponent<Rigidbody>();
         _player = FindObjectOfType<PlayerMovement>();
 
     }
+
+    public void SetPlayerOwner(LayerMask enemyLayer)
+    {
+        damagePlayer = false;
+        enemyMask = enemyLayer;
+    }
+
+
     public void Launch(Vector3 targetPos, float lifeTime, int damage)
     {
        if(_rb == null) return;
@@ -80,30 +92,31 @@ public class FireBall : MonoBehaviour
 
     private void ApplyExplosionDamage(Vector3 position)
     {
-        if (_player == null) return;
+        if (damagePlayer)
+        {
+            if (_player == null) return;
 
-        //Vector3 origin = position + Vector3.up * 0.5f;
-        //Vector3 target = _player.position + Vector3.up * 0.5f;
+            Vector3 playerPos = _player.transform.position;
+            Vector3 dir = playerPos - position;
+            float dist = Vector3.Distance(position, playerPos);
 
-        //RaycastHit hit;
-        //if (Physics.Linecast(origin, target, out hit, obstacleMask, QueryTriggerInteraction.Ignore))
-        //{
-        //    return;
-        //}
+            if (dist > explosionRadius) return;
 
-        //Vector3 origin = position + Vector3.up * 0.5f;
-        //Vector3 dir = (_player.position + Vector3.up * 0.5f) - origin;
-        Vector3 playerPos = _player.transform.position;
-        Vector3 dir = playerPos - position;
-        float dist = Vector3.Distance(position, playerPos);
-        
-        if (dist > explosionRadius) return;
-
-        if (Physics.Raycast(position, dir.normalized, dist, obstacleMask))
-            return;
-
-        _player.TakeDamage(_damage);
+            if (Physics.Raycast(position, dir.normalized, dist, obstacleMask))
+                return;
+        }
+        else
+        {
+            Collider[] hits = Physics.OverlapSphere(position, explosionRadius, enemyMask);
+            foreach (var h in hits)
+            {
+                EnemyAI enemy = h.GetComponentInParent<EnemyAI>();
+                if (enemy != null)
+                {
+                    enemy.TakeDamage(_damage);
+                }
+            }
+        }
     }
-
 
 }

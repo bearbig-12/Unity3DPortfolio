@@ -52,7 +52,8 @@ public class ShopSellItemUI : MonoBehaviour
                 continue;
             }
 
-            total += item.ItemData.sellPrice;
+            int count = item.Count;
+            total += item.ItemData.sellPrice * count;
         }
 
         return total;
@@ -86,7 +87,8 @@ public class ShopSellItemUI : MonoBehaviour
                 continue;
             }
 
-            total += item.ItemData.sellPrice;
+            int count = item.Count;
+            total += item.ItemData.sellPrice * count;
             Destroy(item.gameObject);
         }
 

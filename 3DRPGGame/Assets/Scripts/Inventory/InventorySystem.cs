@@ -101,6 +101,7 @@ public class InventorySystem : MonoBehaviour
 
     public bool AddItem(GameObject itemPrefab, InventoryItemData data)
     {
+        Debug.Log("AddItem called. slots=" + (_slots != null ? _slots.Count : -1));
         if (itemPrefab == null || data == null)
         {
             Debug.LogWarning("Inv Item prefab or data is NULL");
@@ -110,6 +111,24 @@ public class InventorySystem : MonoBehaviour
         if (_slots == null || _slots.Count == 0)
         {
             CacheSlots();
+        }
+
+
+        // stack consumables
+        if (data.itemType == InventoryItemType.Consumable)
+        {
+            foreach (ItemSlot slot in _slots)
+            {
+                if (slot == null || slot.Item == null) continue;
+
+                InventoryItemUI ui = slot.Item.GetComponent<InventoryItemUI>();
+                if (ui != null && ui.ItemData != null &&
+                    ui.ItemData.GetStableId() == data.GetStableId())
+                {
+                    ui.AddCount(1);
+                    return true;
+                }
+            }
         }
 
         foreach (ItemSlot slot in _slots)
@@ -177,12 +196,36 @@ public class InventorySystem : MonoBehaviour
                 }
             }
 
-            Destroy(itemUI.gameObject);
+            // stack °¨¼Ò
+            bool hasRemaining = itemUI.ConsumeItem();
+            if (!hasRemaining) Destroy(itemUI.gameObject);
         }
         else if (data.itemType == InventoryItemType.Weapon)
         {
             EquipWeaponFromItemUI(itemUI);
         }
+    }
+
+    public bool TryConsumeForQuickSlot(string itemId)
+    {
+        if (_slots == null) return false;
+
+        foreach (var slot in _slots)
+        {
+            if (slot == null || slot.Item == null) continue;
+            InventoryItemUI ui = slot.Item.GetComponent<InventoryItemUI>();
+            if (ui != null && ui.ItemData != null)
+            {
+                if (ui.ItemData.itemType == InventoryItemType.Consumable &&
+                    ui.ItemData.GetStableId() == itemId)
+                {
+                    UseItem(ui);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public void DropItem(InventoryItemUI itemUI)
@@ -271,40 +314,102 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-    public List<string> GetSavedItmeIDs()
+    public List<InventoryItemStack> GetSavedStacks()
     {
-        List<string> ids = new List<string>();
+        List<InventoryItemStack> stacks = new List<InventoryItemStack>();
 
-        foreach (var slot in _slots)
+        foreach(var slot in _slots)
         {
             if (slot == null || slot.Item == null) continue;
+
             InventoryItemUI ui = slot.Item.GetComponent<InventoryItemUI>();
-            if(ui != null && ui.ItemData != null)
+            if (ui != null && ui.ItemData != null)
             {
-                ids.Add(ui.ItemData.GetStableId());
+                stacks.Add(new InventoryItemStack {id = ui.ItemData.GetStableId(), count = ui.Count });
             }
+
         }
 
-        return ids;
+        return stacks;
+        
     }
 
-    public void LoadFromSavedIds(List<string> ids)
+    public void LoadFromSavedStacks(List<InventoryItemStack> stacks)
     {
-        if (ids == null) return;
-        if(itemIconPrefab == null)
+        if (stacks == null) return;
+        if (itemIconPrefab == null)
         {
             Debug.LogWarning("itemIconPrefab is not assigned.");
             return;
         }
 
-
-        foreach(var id in ids)
+        foreach (var s in stacks)
         {
-            InventoryItemData data = InventoryItemDatabase.Instance.GetById(id);
-            if (data != null)
+            if (s == null || string.IsNullOrEmpty(s.id)) continue;
+            InventoryItemData data = InventoryItemDatabase.Instance.GetById(s.id);
+
+            int count = s.count;
+
+            for (int i = 0; i < count; ++i)
             {
                 AddItem(itemIconPrefab, data);
             }
+
+        }
+
+    }
+
+
+
+
+
+    public void ClearInventory()
+    {
+        if (_slots == null) return;
+
+        foreach (var slot in _slots)
+        {
+            if (slot == null || slot.Item == null) continue;
+            Destroy(slot.Item);
         }
     }
+
+    //public List<string> GetSavedItmeIDs()
+    //{
+    //    List<string> ids = new List<string>();
+
+    //    foreach (var slot in _slots)
+    //    {
+    //        if (slot == null || slot.Item == null) continue;
+    //        InventoryItemUI ui = slot.Item.GetComponent<InventoryItemUI>();
+    //        if(ui != null && ui.ItemData != null)
+    //        {
+    //            ids.Add(ui.ItemData.GetStableId());
+    //        }
+    //    }
+
+    //    return ids;
+    //}
+
+    //public void LoadFromSavedIds(List<string> ids)
+    //{
+    //    if (ids == null) return;
+    //    if(itemIconPrefab == null)
+    //    {
+    //        Debug.LogWarning("itemIconPrefab is not assigned.");
+    //        return;
+    //    }
+
+
+    //    foreach(var id in ids)
+    //    {
+    //        InventoryItemData data = InventoryItemDatabase.Instance.GetById(id);
+    //        if (data != null)
+    //        {
+    //            AddItem(itemIconPrefab, data);
+    //        }
+    //    }
+    //}
+
+
 }

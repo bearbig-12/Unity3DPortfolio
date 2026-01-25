@@ -21,7 +21,10 @@ public class DragDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
     {
         _rectTransform = GetComponent<RectTransform>();
         _canvasGroup = GetComponent<CanvasGroup>();
+        if (_canvasGroup == null) _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        if (canvas == null) canvas = GetComponentInParent<Canvas>();
     }
+
 
     public void SetCanvas(Canvas newCanvas)
     {

@@ -60,6 +60,16 @@ public class SkillTreeSystem : MonoBehaviour
         return true;
     }
 
+    public bool IsLearned(string id)
+    {
+        if (_learned.TryGetValue(id, out var state))
+        {
+            return state.rank > 0;
+        }
+        return false;
+    }
+
+
     public List<SkillState> GetLearnedForSave()
     {
         return new List<SkillState>(_learned.Values);
