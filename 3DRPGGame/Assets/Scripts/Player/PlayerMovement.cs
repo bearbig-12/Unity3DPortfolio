@@ -56,6 +56,8 @@ public class PlayerMovement : MonoBehaviour
     public int attackDamage = 20;
     private int _baseAttackDamage;
 
+    // 스킬 사용중에는 다른 동작 못하게
+    public bool isCastingSkill = false;
 
     public enum HealType
     {
@@ -144,7 +146,7 @@ public class PlayerMovement : MonoBehaviour
             _attackTimer -= Time.deltaTime;
         }
 
-        if (inventoryOpen || _shop.IsShop)
+        if (inventoryOpen || _shop.IsShop || isCastingSkill)
         {
             MoveInput = Vector2.zero;
             SetIdleAnim();
@@ -311,6 +313,33 @@ public class PlayerMovement : MonoBehaviour
         _attackActive = false;
         _enemiesHit.Clear();
     }
+
+
+    public void AnimEvent_SkillLockOn()
+    {
+        isCastingSkill = true;
+        MoveInput = Vector2.zero;
+        SetIdleAnim();
+    }
+
+    public void AnimEvent_SkillLockOff()
+    {
+        isCastingSkill = false;
+    }
+
+    public void AnimEvent_SkillAttackStart()
+    {
+        if (_attackActive) return;
+        _attackActive = true;
+        _enemiesHit.Clear();
+    }
+
+    public void AnimEvent_SkillAttackEnd()
+    {
+        _attackActive = false;
+        _enemiesHit.Clear();
+    }
+
     public void WeaponHitCheck()
     {
         if(weaponRoot == null || weaponTip == null)

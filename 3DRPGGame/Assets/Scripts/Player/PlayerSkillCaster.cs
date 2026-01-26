@@ -14,7 +14,7 @@ public class PlayerSkillCaster : MonoBehaviour
     [SerializeField] private float weaponEnhancementDuration = 10f;
 
     [Header("Weapon Enhancement Effects")]
-    [SerializeField] private GameObject weaponEnhanceVfx;   // 유지되는 동안
+    [SerializeField] private GameObject weaponEnhanceVfx;   
 
     [Header("Fire Ball")]
     [SerializeField] private GameObject fireBallPrefab;
@@ -69,6 +69,11 @@ public class PlayerSkillCaster : MonoBehaviour
             return CastFireBall(def.damage);
         }
 
+        if (def.id == "power_slash" || def.id == "advanced_power_slash")
+        {
+            return CastMeleeSkill();
+        }
+
         return false;
     }
 
@@ -104,6 +109,8 @@ public class PlayerSkillCaster : MonoBehaviour
     {
         if (player == null || fireBallPrefab == null) return false;
 
+        TriggerSkillAnimation("SpellCast");
+
         Transform spawn = fireBallSpawn != null ? fireBallSpawn : player.transform;
         Vector3 spawnPos = spawn.position;
 
@@ -126,5 +133,20 @@ public class PlayerSkillCaster : MonoBehaviour
         fireBall.Launch(targetPos, fireBallLifeTime, damage);
 
         return true;
+    }
+
+    private bool CastMeleeSkill()
+    {
+        if (player == null) return false;
+
+        TriggerSkillAnimation("MeleeSkill");
+        return true;
+    }
+
+    private void TriggerSkillAnimation(string triggerName)
+    {
+        if (player == null || player._animator == null) return;
+
+        player._animator.SetTrigger(triggerName);
     }
 }

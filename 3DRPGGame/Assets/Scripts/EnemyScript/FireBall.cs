@@ -61,8 +61,9 @@ public class FireBall : MonoBehaviour
 
         bool isPlayer = hitLayer == LayerMask.NameToLayer("Player");
         bool isObstacle = (hitLayer == LayerMask.NameToLayer("Ground") || hitLayer == LayerMask.NameToLayer("Wall"));
+        bool isEnemy = collision.collider.GetComponentInParent<EnemyAI>() != null;
 
-        if (isPlayer || isObstacle)
+        if (isPlayer || isObstacle || isEnemy)
         {
             Vector3 hitPoint = transform.position;
             SpawnExplosion(hitPoint);
