@@ -5,6 +5,12 @@ using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
+
+    public string enemyId = "monster";
+
+    public static event System.Action<EnemyAI> OnEnemyKilled;
+
+
     public NavMeshAgent _agent;
     public Animator _animator;
     public Transform _player;
@@ -237,6 +243,9 @@ public class EnemyAI : MonoBehaviour
 
         _progress.AddEXP(expReward);
 
+        // 이벤트 콜
+        OnEnemyKilled?.Invoke(this);
+
         StartCoroutine(DespawnAfter(2f));
     }
 
@@ -249,6 +258,7 @@ public class EnemyAI : MonoBehaviour
     // 보스의 Phase 2를 위한 함수
     protected virtual void OnDamaged(int damage)
     {
+
     }
 
 

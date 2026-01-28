@@ -3,7 +3,8 @@ using UnityEngine;
 public enum InventoryItemType
 {
     Weapon,
-    Consumable
+    Consumable,
+    Quest
 }
 
 public enum ConsumableType

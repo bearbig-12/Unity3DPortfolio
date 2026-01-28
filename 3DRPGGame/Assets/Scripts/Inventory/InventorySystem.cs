@@ -374,6 +374,59 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
+
+    // 퀘스트 보상용
+    public bool AddItemByData(InventoryItemData data)
+    {
+        if (data == null) return false;
+        if (itemIconPrefab == null) return false;
+        return AddItem(itemIconPrefab, data);
+    }
+
+    public bool HasItem(string itemId)
+    {
+        if (_slots == null) return false;
+        foreach (var slot in _slots)
+        {
+            if (slot == null || slot.Item == null) continue;
+            var ui = slot.Item.GetComponent<InventoryItemUI>();
+            if (ui != null && ui.ItemData != null && ui.ItemData.GetStableId() == itemId)
+                return true;
+        }
+        return false;
+    }
+
+    public bool RemoveItemById(string itemId, int amount)
+    {
+        if (_slots == null) return false;
+        int remaining = amount;
+
+        foreach (var slot in _slots)
+        {
+            if (slot == null || slot.Item == null) continue;
+
+            var ui = slot.Item.GetComponent<InventoryItemUI>();
+            if (ui == null || ui.ItemData == null) continue;
+
+            if (ui.ItemData.GetStableId() != itemId) continue;
+
+            while (remaining > 0 && ui.Count > 0)
+            {
+                ui.ConsumeItem();
+                remaining -= 1;
+            }
+
+            if (ui.Count <= 0)
+            {
+                Destroy(ui.gameObject);
+            }
+
+            if (remaining <= 0) return true;
+        }
+
+        return false;
+    }
+
     //public List<string> GetSavedItmeIDs()
     //{
     //    List<string> ids = new List<string>();

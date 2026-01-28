@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,8 @@ public class ShopKepper : MonoBehaviour
     public bool isTalking = false;
     [SerializeField] private GameObject interactUI;
     [SerializeField] private Vector3 interactUIOffset = new Vector3(0f, 2.2f, 0f);
+
+
 
     private enum ShopState
     {
@@ -23,6 +26,11 @@ public class ShopKepper : MonoBehaviour
 
     public GameObject buyPanelUI;
     public GameObject sellPanelUI;
+
+
+    [SerializeField] private Button questBtn;
+    [SerializeField] private DialogueUI dialogueUI;
+    [SerializeField] private List<QuestData> questOrder = new List<QuestData>();
 
     private ShopState state = ShopState.Closed;
 
@@ -42,6 +50,7 @@ public class ShopKepper : MonoBehaviour
     {
         buyBtn.onClick.AddListener(BuyMode);
         sellBtn.onClick.AddListener(SellMode);
+        questBtn.onClick.AddListener(QuestMode); 
         exitBtn.onClick.AddListener(StopInteract);
 
 
@@ -51,6 +60,7 @@ public class ShopKepper : MonoBehaviour
     {
         buyBtn.onClick.RemoveListener(BuyMode);
         sellBtn.onClick.RemoveListener(SellMode);
+        questBtn.onClick.RemoveListener(QuestMode);
         exitBtn.onClick.RemoveListener(StopInteract);
     }
 
@@ -229,5 +239,58 @@ public class ShopKepper : MonoBehaviour
 
         bool shouldShow = playerInRange && state == ShopState.Closed;
         interactUI.SetActive(shouldShow);
+    }
+
+    private void QuestMode()
+    {
+        Debug.Log("QuestMode called");
+
+        if (QuestManager.Instance == null || dialogueUI == null)
+            return;
+
+        QuestData q = QuestManager.Instance.GetCurrentQuest(questOrder);
+
+        if (q == null)
+        {
+            dialogueUI.Show("Quest", "There are no quests available right now.");
+            return;
+        }
+
+        var status = QuestManager.Instance.GetStatus(q.questId);
+
+        if (status == QuestStatus.Available)
+        {
+            dialogueUI.Show(
+                $"Quest: {q.title}",
+                q.description,
+                () => QuestManager.Instance.StartQuest(q.questId),
+                true
+            );
+            return;
+        }
+
+        if (status == QuestStatus.InProgress)
+        {
+            var obj = QuestManager.Instance.GetCurrentObjective(q.questId);
+
+            if (obj != null && obj.type == QuestObjectiveType.RequiredItem)
+            {
+                bool requiredItem = QuestManager.Instance.SubmitRequiredItem(q.questId);
+                dialogueUI.Show(
+                    $"Quest: {q.title}",
+                    requiredItem ? "Great. Proceed to the next objective." : "Please bring the required item."
+                );
+                return;
+            }
+
+            if (obj != null && obj.type == QuestObjectiveType.Kill)
+            {
+                int c = QuestManager.Instance.GetCount(q.questId);
+                dialogueUI.Show($"Quest: {q.title}", $"Progress: {c}/{obj.requiredCount}");
+                return;
+            }
+        }
+
+        dialogueUI.Show($"Quest: {q.title}", "This quest is already completed.");
     }
 }

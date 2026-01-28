@@ -808,6 +808,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ac0a61a69f354d8c36c7a1109b904, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enemyId: dungeon_monster
   _agent: {fileID: 1297173659015227501}
   _animator: {fileID: 3293499351991783813}
   _player: {fileID: 0}
@@ -838,6 +839,7 @@ MonoBehaviour:
   hardAttackTrigger: HardAttack
   homePos: {x: 0, y: 0, z: 0}
   homeArriveDist: 1
+  expReward: 30
 --- !u!195 &1297173659015227501
 NavMeshAgent:
   m_ObjectHideFlags: 0
