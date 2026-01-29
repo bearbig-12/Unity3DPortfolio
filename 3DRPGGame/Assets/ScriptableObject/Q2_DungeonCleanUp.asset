@@ -20,7 +20,7 @@ MonoBehaviour:
   objectives:
   - type: 0
     targetEnemyId: dungeon_monster
-    requiredCount: 3
+    requiredCount: 2
     requiredItemId: 
   rewardExp: 50
   rewardGold: 100
