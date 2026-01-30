@@ -59,6 +59,14 @@ public class PlayerMovement : MonoBehaviour
     // 스킬 사용중에는 다른 동작 못하게
     public bool isCastingSkill = false;
 
+    [SerializeField] private float hitLockDuration = 0.5f; // Hit 에니메이션 재생 시간
+    [SerializeField] private float hitCooldown = 1f;
+    private float _hitLockEndTime = 0f;
+    private float _nextHitAllowedTime = 0f;
+    private bool _isHitPlaying = false;
+
+    private bool IsHitLocked => Time.time < _hitLockEndTime;
+
     public enum HealType
     {
         HP,
@@ -126,6 +134,15 @@ public class PlayerMovement : MonoBehaviour
         {
             _cam.ToggleLockOn(transform); 
         }
+
+        if (IsHitLocked)
+        {
+            MoveInput = Vector2.zero;
+            SetIdleAnim();
+            return;  
+        }
+
+
 
         // 달리기
         bool canRun = _currentStamina > 0;
@@ -200,9 +217,9 @@ public class PlayerMovement : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.E))
+        if(Input.GetKeyDown(KeyCode.V))
         {
-            TakeDamage(10);
+            TakeDamage(1);
         }
 
         StateMachine.Update();
@@ -284,10 +301,36 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    private void EnterHitLock()
+    {
+        _hitLockEndTime = Time.time + hitLockDuration;
+        _nextHitAllowedTime = Time.time + hitCooldown;
+        _isHitPlaying = true;
+
+        // 공격 상태 강제 종료
+        _attackActive = false;
+        _enemiesHit.Clear();
+        SetAttacking(false);
+
+        if (StateMachine != null && IdleState != null)
+            StateMachine.ChangeState(IdleState);
+
+        _animator.ResetTrigger("Attack01");
+        _animator.ResetTrigger("Attack02");
+        _animator.ResetTrigger("Attack03");
+
+        _animator.SetTrigger("Hit");
+    }
+
     public void TakeDamage(int damage)
     {
         _currentHealth -= damage;
         _healthbar.SetHealth(_currentHealth);
+
+        if (Time.time >= _nextHitAllowedTime && !_isHitPlaying)
+        {
+            EnterHitLock();
+        }
     }
 
     public void ChangeStamina(int amount)
@@ -340,6 +383,10 @@ public class PlayerMovement : MonoBehaviour
         _enemiesHit.Clear();
     }
 
+    public void AnimEvent_HitEnd()
+    {
+        _isHitPlaying = false;
+    }
     public void WeaponHitCheck()
     {
         if(weaponRoot == null || weaponTip == null)

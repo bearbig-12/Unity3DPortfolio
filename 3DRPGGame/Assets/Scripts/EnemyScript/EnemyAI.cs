@@ -62,6 +62,14 @@ public class EnemyAI : MonoBehaviour
     public int expReward = 30;
     private PlayerProgress _progress;
 
+    [Header("Hit Settings")]
+    [SerializeField] private float hitCooldown = 5.0f;
+    private float _nextHitAllowedTime = 0f;
+    private bool _isHitPlaying = false;
+    private bool _isHitLocked = false;
+
+    private bool IsHitLocked => _isHitLocked;
+
 
     public StateMachine StateMachine { get; private set; }
     public EnemyIdleState IdleState { get; private set; }
@@ -115,8 +123,20 @@ public class EnemyAI : MonoBehaviour
     // Update is called once per frame
     protected virtual void Update()
     {
-        if(isDead)
+        if (isDead)
             return;
+
+        if (IsHitLocked)
+        {
+            if (_agent != null) _agent.isStopped = true;
+            _animator.SetBool("IsWalking", false);
+            _animator.SetBool("IsRunning", false);
+            return;
+        }
+        else
+        {
+            if (_agent != null) _agent.isStopped = false;
+        }
 
         Move();
         StateMachine.Update();
@@ -216,18 +236,23 @@ public class EnemyAI : MonoBehaviour
     {
         if (isDead)
             return;
+
         currentHealth -= damage;
+
+        if (Time.time >= _nextHitAllowedTime && !_isHitPlaying)
+        {
+            _nextHitAllowedTime = Time.time + hitCooldown;
+            _isHitPlaying = true;
+            _animator.SetTrigger("Hit");
+        }
 
         OnDamaged(damage);
 
         if (healthBar != null)
-        {
             healthBar.SetHealth(currentHealth);
-        }
-        if(currentHealth <= 0)
-        {
+
+        if (currentHealth <= 0)
             Die();
-        }
     }
 
     protected virtual void Die()
@@ -289,8 +314,16 @@ public class EnemyAI : MonoBehaviour
     }
 
 
+    public void AnimEvent_HitStart()
+    {
+        _isHitLocked = true;
+    }
 
-
+    public void AnimEvent_HitEnd()
+    {
+        _isHitLocked = false;
+        _isHitPlaying = false;
+    }
     void OnDrawGizmos()
     {
         // alertRange (Idle -> Patrol)

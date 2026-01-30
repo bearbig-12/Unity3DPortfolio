@@ -97,6 +97,12 @@ public class InventorySystem : MonoBehaviour
             Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = isOpen;
         }
+
+        if (!isOpen)
+        {
+            if (InventoryContextMenu.Instance != null)
+                InventoryContextMenu.Instance.Hide();
+        }
     }
 
     public bool AddItem(GameObject itemPrefab, InventoryItemData data)
@@ -274,9 +280,15 @@ public class InventorySystem : MonoBehaviour
         _equippedWeaponInstance.transform.localScale = Vector3.one;
 
 
+    
+
         if (_player != null)
         {
             _player.SetWeaponHitPoints(_equippedWeaponInstance.transform);
+
+            var trailEvents = _player.GetComponent<WeaponTrail>();
+            if (trailEvents != null)
+                trailEvents.SetTrail(_equippedWeaponInstance.transform);
         }
     }
 
