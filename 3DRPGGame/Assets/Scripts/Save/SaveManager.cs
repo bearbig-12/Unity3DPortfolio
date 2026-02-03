@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Diagnostics;
 using UnityEngine;
 using System.Collections;
 
@@ -8,6 +10,10 @@ public class SaveManager : MonoBehaviour
     [SerializeField] private SkillTreeSystem skillTree;
     [SerializeField] private InventorySystem inventory;
     [SerializeField] private GoldManager goldManager;
+    [SerializeField] private Transform player;
+
+    [Header("Performance Logging")]
+    [SerializeField] private bool enablePerformanceLog = true;
 
     private string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
 
@@ -23,8 +29,17 @@ public class SaveManager : MonoBehaviour
         }
     }
 
-    public void Save()
+    public void Save(string savePointId = "")
     {
+        Stopwatch sw = null;
+        long beforeMem = 0;
+
+        if (enablePerformanceLog)
+        {
+            sw = Stopwatch.StartNew();
+            beforeMem = GC.GetTotalMemory(false);
+        }
+
         SaveData data = new SaveData();
 
         data.currentExp = progress.CurrentExp;
@@ -52,18 +67,57 @@ public class SaveManager : MonoBehaviour
             data.inventoryStacks = inventory.GetSavedStacks();
         }
 
+        // í”Œë ˆì´ì–´ ìœ„ì¹˜ ì €ì¥
+        if (player != null)
+        {
+            data.SetPlayerPosition(player.position);
+        }
+
+        // ì„¸ì´ë¸Œ í¬ì¸íŠ¸ ID ì €ì¥
+        data.lastSavePointId = savePointId;
+
+        // ëª¬ìŠ¤í„° ìƒíƒœ ì €ì¥
+        if (MonsterSpawnManager.Instance != null)
+        {
+            data.monsterStates = MonsterSpawnManager.Instance.GetAllSaveData();
+        }
 
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(SavePath, json);
-        Debug.Log("Saved to: " + SavePath);
+
+        if (enablePerformanceLog)
+        {
+            sw.Stop();
+            long afterMem = GC.GetTotalMemory(false);
+            long memUsed = (afterMem - beforeMem) / 1024;
+            int monsterCount = data.monsterStates?.Count ?? 0;
+
+            UnityEngine.Debug.Log($"[Save ì„±ëŠ¥] ì‹œê°„: {sw.ElapsedMilliseconds}ms | ë©”ëª¨ë¦¬: {memUsed}KB | ëª¬ìŠ¤í„°: {monsterCount}ë§ˆë¦¬");
+        }
+
+        UnityEngine.Debug.Log("Saved to: " + SavePath);
+    }
+
+    public void SaveFromTrigger(string savePointId)
+    {
+        Save(savePointId);
     }
 
     public void Load()
     {
         if (!File.Exists(SavePath))
         {
-            Debug.Log("No save file found.");
+            UnityEngine.Debug.Log("No save file found.");
             return;
+        }
+
+        Stopwatch sw = null;
+        long beforeMem = 0;
+
+        if (enablePerformanceLog)
+        {
+            sw = Stopwatch.StartNew();
+            beforeMem = GC.GetTotalMemory(false);
         }
 
         string json = File.ReadAllText(SavePath);
@@ -93,18 +147,48 @@ public class SaveManager : MonoBehaviour
             StartCoroutine(LoadInventoryAfterClear(data));
         }
 
+        // í”Œë ˆì´ì–´ ìœ„ì¹˜ ë³µì›
+        if (player != null && (data.playerPosX != 0 || data.playerPosY != 0 || data.playerPosZ != 0))
+        {
+            CharacterController cc = player.GetComponent<CharacterController>();
+            if (cc != null)
+            {
+                cc.enabled = false;
+                player.position = data.GetPlayerPosition();
+                cc.enabled = true;
+            }
+            else
+            {
+                player.position = data.GetPlayerPosition();
+            }
+        }
 
+        // ëª¬ìŠ¤í„° ìƒíƒœ ë³µì›
+        if (MonsterSpawnManager.Instance != null && data.monsterStates != null)
+        {
+            MonsterSpawnManager.Instance.ApplyLoadedData(data.monsterStates);
+        }
 
-        Debug.Log("Loaded save.");
+        if (enablePerformanceLog)
+        {
+            sw.Stop();
+            long afterMem = GC.GetTotalMemory(false);
+            long memUsed = (afterMem - beforeMem) / 1024;
+            int monsterCount = data.monsterStates?.Count ?? 0;
+
+            UnityEngine.Debug.Log($"[Load ì„±ëŠ¥] ì‹œê°„: {sw.ElapsedMilliseconds}ms | ë©”ëª¨ë¦¬: {memUsed}KB | ëª¬ìŠ¤í„°: {monsterCount}ë§ˆë¦¬");
+        }
+
+        UnityEngine.Debug.Log("Loaded save.");
     }
 
-    // °°Àº ÇÁ·¹ÀÓ¿¡ ¾ÆÀÌÅÛ »èÁ¦ ¹× ·Îµå°¡ ÀÏ¾î³ª¸é ÀÎº¥Åä¸®¿¡ ¾Æ¹«°Íµµ ¾È¶ß°ÔµÈ´Ù.
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Îµå°¡ ï¿½Ï¾î³ªï¿½ï¿½ ï¿½Îºï¿½ï¿½ä¸®ï¿½ï¿½ ï¿½Æ¹ï¿½ï¿½Íµï¿½ ï¿½È¶ß°ÔµÈ´ï¿½.
     private IEnumerator LoadInventoryAfterClear(SaveData data)
     {
-        //±âÁ¸ ¾ÆÀÌÅÛÀ» ¸ÕÀú »èÁ¦ÇÑ´Ù
+        //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ñ´ï¿½
         inventory.ClearInventory();
         yield return null;
-        // ÀÌÁ¦ ºó ½½·Ô¿¡ ÀúÀåµÈ ½ºÅÃÀ» º¹¿ø
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Ô¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         inventory.LoadFromSavedStacks(data.inventoryStacks);
     }
 }

@@ -17,30 +17,26 @@ public class BossAI : EnemyAI
         Aoe
     }
 
-    [Header("Boss Phase")]
-    public float phase2HealthRatio = 0.5f;
+    // BossDefinition Ï∫êÏä§ÌåÖ Ìó¨Ìçº
+    private BossDefinition BossDef => definition as BossDefinition;
+
+    // SOÏóêÏÑú Í∞ÄÏ†∏Ïò§Îäî Î≥¥Ïä§ Ï†ÑÏö© ÌîÑÎ°úÌçºÌã∞Îì§ (Ìè¥Î∞±Í∞í Ìè¨Ìï®)
+    public float phase2HealthRatio => BossDef != null ? BossDef.phase2HealthRatio : 0.5f;
+    public float meleeRange => BossDef != null ? BossDef.meleeRange : 2.5f;
+    public float rangedRange => BossDef != null ? BossDef.rangedRange : 10f;
+    public float aoeRange => BossDef != null ? BossDef.aoeRange : 6f;
+    public float meleeCooldown => BossDef != null ? BossDef.meleeCooldown : 2f;
+    public float rangedCooldown => BossDef != null ? BossDef.rangedCooldown : 3f;
+    public float aoeCooldown => BossDef != null ? BossDef.aoeCooldown : 6f;
+    public int meleeDamage => BossDef != null ? BossDef.meleeDamage : 10;
+    public int rangedDamage => BossDef != null ? BossDef.rangedDamage : 8;
+    public int aoeDamage => BossDef != null ? BossDef.aoeDamage : 5;
+    public string meleeTrigger => BossDef != null ? BossDef.meleeTrigger : "MeleeAttack";
+    public string rangedTrigger => BossDef != null ? BossDef.rangedTrigger : "RangedAttack";
+    public string aoeTrigger => BossDef != null ? BossDef.aoeTrigger : "AOEAttack";
+    public string phase2Trigger => BossDef != null ? BossDef.phase2Trigger : "Phase2";
+
     public BossPhase CurrentPhase { get; private set; } = BossPhase.Phase1;
-
-    [Header("Boss Attack Ranges")]
-    public float meleeRange = 2.5f;
-    public float rangedRange = 10f;
-    public float aoeRange = 6f;
-
-    [Header("Boss Cooldowns")]
-    public float meleeCooldown = 2f;
-    public float rangedCooldown = 3f;
-    public float aoeCooldown = 6f;
-
-    [Header("Boss Damage")]
-    public int meleeDamage = 10;
-    public int rangedDamage = 8;
-    public int aoeDamage = 5;
-
-    [Header("Boss Animator Triggers")]
-    public string meleeTrigger = "MeleeAttack";
-    public string rangedTrigger = "RangedAttack";
-    public string aoeTrigger = "AOEAttack";
-    public string phase2Trigger = "Phase2";
 
     [Header("Boss Hitboxes")]
     public EnemyDamageHitbox[] meleeHitboxes;
@@ -58,7 +54,7 @@ public class BossAI : EnemyAI
     public GameObject fireBallPrefab;
     public Transform rightHandPos;
     public float fireBallLifeTime = 5f;
-    public float aimHeightOffset = 1.0f; // ¡∂¡ÿ ≥Ù¿Ã
+    public float aimHeightOffset = 1.0f; // ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
 
     private float _nextMeleeTime;
     private float _nextRangedTime;
@@ -67,7 +63,7 @@ public class BossAI : EnemyAI
     protected override void Start()
     {
         base.Start();
-        expReward = 100;
+        // expRewardÎäî Ïù¥Ï†ú MonsterDefinition SOÏóêÏÑú ÏÑ§Ï†ï
     }
 
 
@@ -81,7 +77,8 @@ public class BossAI : EnemyAI
     }
     protected override void OnDamaged(int damage)
     {
-        if (CurrentPhase == BossPhase.Phase1 && currentHealth <= 50f)
+        float phase2Threshold = maxHealth * phase2HealthRatio;
+        if (CurrentPhase == BossPhase.Phase1 && currentHealth <= phase2Threshold)
         {
             Debug.Log("Boss Phase Changed to Phase 2");
             CurrentPhase = BossPhase.Phase2;
@@ -143,7 +140,7 @@ public class BossAI : EnemyAI
     {
         if (_rangedFireHandEffect != null)
         {
-            // ªı∑ŒøÓ ∆ƒ∆º≈¨ »ø∞˙¥¬ ≥™ø¿¡ˆ æ ∞Ì ±‚¡∏ ∆ƒ∆º≈¨ »ø∞˙¥¬ ¿⁄ø¨Ω∫∑¥∞‘ ªÁ∂Û¡ˆµµ∑œ
+            // ÔøΩÔøΩÔøΩŒøÔøΩ ÔøΩÔøΩ∆º≈¨ »øÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩ ∞ÔøΩ ÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩ∆º≈¨ »øÔøΩÔøΩÔøΩÔøΩ ÔøΩ⁄øÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ
             _rangedFireHandEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
     }
@@ -161,7 +158,7 @@ public class BossAI : EnemyAI
             Collider FireBallColl = obj.GetComponent<Collider>();
             Collider BossColl = GetComponent<Collider>();
 
-            // ∫∏Ω∫ ƒ›∂Û¿Ã¥ıø° ¥Íæ∆º≠ ≈Õ¡ˆ¥¬ ∞≈ πÊ¡ˆ
+            // ÔøΩÔøΩÔøΩÔøΩ ÔøΩ›∂ÔøΩÔøΩÃ¥ÔøΩÔøΩÔøΩ ÔøΩÔøΩ∆ºÔøΩ ÔøΩÔøΩÔøΩÔøΩÔøΩÔøΩ ÔøΩÔøΩ ÔøΩÔøΩÔøΩÔøΩ
             if (FireBallColl != null && BossColl != null)
             {
                 Physics.IgnoreCollision(FireBallColl, BossColl);
@@ -239,9 +236,31 @@ public class BossAI : EnemyAI
         {
             _nextRangedTime = Time.time + rangedCooldown;
         }
-        else 
+        else
         {
             _nextAoeTime = Time.time + aoeCooldown;
         }
     }
+
+    #region Save/Load Overrides
+
+    public override MonsterSaveData GetSaveData()
+    {
+        MonsterSaveData data = base.GetSaveData();
+        data.bossPhase = (int)CurrentPhase;
+        return data;
+    }
+
+    public override void ApplyLoadedData(MonsterSaveData data)
+    {
+        base.ApplyLoadedData(data);
+
+        // Î≥¥Ïä§ ÌéòÏù¥Ï¶à Î≥µÏõê
+        if (data.bossPhase > 0)
+        {
+            CurrentPhase = (BossPhase)data.bossPhase;
+        }
+    }
+
+    #endregion
 }

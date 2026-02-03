@@ -18,7 +18,7 @@ public class EnemyDamageHitbox : MonoBehaviour
 
         if (_hit.Add(player))
         {
-            int dmg =  _enemy.attackDamage;
+            int dmg = _enemy.currentAttackDamage;
             player.TakeDamage(dmg);
         }
     }

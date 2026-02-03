@@ -88,17 +88,13 @@ public class EnemyAttackState : State
 
             if (isHard)
             {
-               // int idx = Random.Range(0, 3);
-               // _enemy._animator.SetInteger("HardAttackIndex", idx);
                 _enemy._animator.SetTrigger(_enemy.hardAttackTrigger);
-                _enemy.attackDamage = 10 ;
+                _enemy.currentAttackDamage = _enemy.hardAttackDamage;
             }
             else
             {
-                //int idx = Random.Range(0, 2);
-               // _enemy._animator.SetInteger("BasicAttackIndex", idx);
                 _enemy._animator.SetTrigger(_enemy.basicAttackTrigger);
-                _enemy.attackDamage = 5;
+                _enemy.currentAttackDamage = _enemy.basicAttackDamage;
             }
 
         }

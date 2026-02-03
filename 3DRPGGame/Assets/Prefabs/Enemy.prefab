@@ -808,38 +808,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ac0a61a69f354d8c36c7a1109b904, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  definition: {fileID: 11400000, guid: 552f56a6291a42640964bb3f9fc655cd, type: 2}
   enemyId: dungeon_monster
   _agent: {fileID: 1297173659015227501}
   _animator: {fileID: 3293499351991783813}
   _player: {fileID: 0}
-  maxHealth: 100
   currentHealth: 0
   isDead: 0
   healthBar: {fileID: 1855619922743912322}
-  healthBarOffset: {x: 0, y: 2.5, z: 0}
-  alertRange: 15
-  fovRange: 10
-  fovAngle: 90
-  attackRange: 2
-  returnRange: 30
-  patrolSpeed: 3
-  chaseSpeed: 6
   patrolPoints:
   - {fileID: 0}
   - {fileID: 0}
   patrolArrived: 1
-  attackCooldown: 1
-  attackDamage: 10
   nextAttackTime: 0
   hitboxes:
   - {fileID: 6073218061684394628}
   - {fileID: 7499853897051451865}
   - {fileID: 2688149209747574312}
-  basicAttackTrigger: BasicAttack
-  hardAttackTrigger: HardAttack
   homePos: {x: 0, y: 0, z: 0}
   homeArriveDist: 1
-  expReward: 30
+  currentAttackDamage: 0
+  hitCooldown: 5
 --- !u!195 &1297173659015227501
 NavMeshAgent:
   m_ObjectHideFlags: 0

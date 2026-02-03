@@ -150,53 +150,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 498a8a042f28e05428ee436316db2f35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  definition: {fileID: 11400000, guid: a7c8180ace7eef14bb1c1cbc0b5a0d95, type: 2}
   enemyId: boss
   _agent: {fileID: 3867370595246788646}
   _animator: {fileID: 7255006165678960875}
   _player: {fileID: 0}
-  maxHealth: 100
   currentHealth: 0
   isDead: 0
   healthBar: {fileID: 7493392727549126910}
-  healthBarOffset: {x: 0, y: 2.5, z: 0}
-  alertRange: 10
-  fovRange: 10
-  fovAngle: 90
-  attackRange: 2
-  returnRange: 30
-  patrolSpeed: 3
-  chaseSpeed: 6
   patrolPoints:
   - {fileID: 0}
   - {fileID: 0}
   patrolArrived: 1
-  attackCooldown: 1
-  attackDamage: 10
   nextAttackTime: 0
   hitboxes:
   - {fileID: 75958481032020341}
   - {fileID: 8529209387650829518}
   - {fileID: 1741797469846409297}
   - {fileID: 6772530075128790303}
-  basicAttackTrigger: BasicAttack
-  hardAttackTrigger: HardAttack
   homePos: {x: 0, y: 0, z: 0}
   homeArriveDist: 1
-  expReward: 30
-  phase2HealthRatio: 0.5
-  meleeRange: 2.5
-  rangedRange: 10
-  aoeRange: 6
-  meleeCooldown: 2
-  rangedCooldown: 3
-  aoeCooldown: 6
-  meleeDamage: 10
-  rangedDamage: 8
-  aoeDamage: 15
-  meleeTrigger: MeleeAttack
-  rangedTrigger: RangedAttack
-  aoeTrigger: AOEAttack
-  phase2Trigger: Phase2
+  currentAttackDamage: 0
+  hitCooldown: 5
   meleeHitboxes:
   - {fileID: 75958481032020341}
   - {fileID: 8529209387650829518}

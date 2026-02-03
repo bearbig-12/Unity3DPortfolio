@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc6a72b036eaf524a95d89ef7fdad941, type: 3}
+  m_Name: BossDefinition
+  m_EditorClassIdentifier: 
+  monsterId: boss
+  monsterName: BossMonster
+  maxHealth: 100
+  basicAttackDamage: 5
+  hardAttackDamage: 10
+  attackCooldown: 1
+  attackRange: 2
+  alertRange: 15
+  fovRange: 8
+  fovAngle: 90
+  returnRange: 30
+  patrolSpeed: 3
+  chaseSpeed: 6
+  expReward: 30
+  basicAttackTrigger: BasicAttack
+  hardAttackTrigger: HardAttack
+  healthBarOffset: {x: 0, y: 2.5, z: 0}
+  phase2HealthRatio: 0.5
+  meleeRange: 2.5
+  rangedRange: 10
+  aoeRange: 6
+  meleeCooldown: 2
+  rangedCooldown: 3
+  aoeCooldown: 6
+  meleeDamage: 10
+  rangedDamage: 8
+  aoeDamage: 5
+  meleeTrigger: MeleeAttack
+  rangedTrigger: RangedAttack
+  aoeTrigger: AOEAttack
+  phase2Trigger: Phase2

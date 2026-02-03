@@ -184,7 +184,7 @@ public class BossAttackState : State
         if (string.IsNullOrEmpty(trigger)) return;
 
         _boss.SetAttackType(type);
-        _boss.attackDamage = damage;
+        _boss.currentAttackDamage = damage;
         _boss.ConsumeAttackCooldown(type);
         if(type == BossAI.BossAttackType.Melee)
         {

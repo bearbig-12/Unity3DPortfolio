@@ -5,10 +5,16 @@ using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
+    [Header("Monster Definition (SO)")]
+    [SerializeField] protected MonsterDefinition definition;
 
+    // 런타임 ID (definition이 없을 경우 폴백용)
     public string enemyId = "monster";
 
     public static event System.Action<EnemyAI> OnEnemyKilled;
+
+    // 저장/로드 관련
+    protected bool _isLoadedFromSave = false;
 
 
     public NavMeshAgent _agent;
@@ -16,51 +22,45 @@ public class EnemyAI : MonoBehaviour
     public Transform _player;
 
     [Header("HP")]
-    public int maxHealth = 100;
     public int currentHealth;
     public bool isDead = false;
 
     [Header("UI")]
     public HealthBar healthBar;
-    public Vector3 healthBarOffset = new Vector3(0, 2.5f, 0);
-
-    [Header("Range")]
-    public float alertRange = 15f; // Idle -> Patrol
-    public float fovRange = 8f; // Patrol -> Chase
-    public float fovAngle = 90f; // Enemy 시야각
-    public float attackRange = 2f; // Chase -> Attack 
-    public float returnRange = 30f; // patrol -> Idle
-
-    [Header("Speeds")]
-    public float patrolSpeed = 3f;
-    public float chaseSpeed = 6f;
-
 
     [Header("Patrol")]
     public Transform[] patrolPoints;
     public float patrolArrived = 1.0f;
 
-
-
     [Header("Attack")]
-    public float attackCooldown = 1f;
-    public int attackDamage = 10;
     public float nextAttackTime = 0f;
     public EnemyDamageHitbox[] hitboxes;
-
-    [Header("Enemy Animator Triggers")]
-    public string basicAttackTrigger = "BasicAttack";
-    public string hardAttackTrigger = "HardAttack";
-
 
     [Header("Return")]
     public Vector3 homePos;
     public float homeArriveDist = 1.0f;
 
-
-    [Header("Rewards")]
-    public int expReward = 30;
     private PlayerProgress _progress;
+
+    // SO에서 가져오는 프로퍼티들 (폴백값 포함)
+    public int maxHealth => definition != null ? definition.maxHealth : 100;
+    public int basicAttackDamage => definition != null ? definition.basicAttackDamage : 5;
+    public int hardAttackDamage => definition != null ? definition.hardAttackDamage : 10;
+
+    // 런타임 데미지 (공격 타입에 따라 변경됨)
+    public int currentAttackDamage;
+    public float attackCooldown => definition != null ? definition.attackCooldown : 1f;
+    public float attackRange => definition != null ? definition.attackRange : 2f;
+    public float alertRange => definition != null ? definition.alertRange : 15f;
+    public float fovRange => definition != null ? definition.fovRange : 8f;
+    public float fovAngle => definition != null ? definition.fovAngle : 90f;
+    public float returnRange => definition != null ? definition.returnRange : 30f;
+    public float patrolSpeed => definition != null ? definition.patrolSpeed : 3f;
+    public float chaseSpeed => definition != null ? definition.chaseSpeed : 6f;
+    public int expReward => definition != null ? definition.expReward : 30;
+    public string basicAttackTrigger => definition != null ? definition.basicAttackTrigger : "BasicAttack";
+    public string hardAttackTrigger => definition != null ? definition.hardAttackTrigger : "HardAttack";
+    public Vector3 healthBarOffset => definition != null ? definition.healthBarOffset : new Vector3(0, 2.5f, 0);
 
     [Header("Hit Settings")]
     [SerializeField] private float hitCooldown = 5.0f;
@@ -98,14 +98,23 @@ public class EnemyAI : MonoBehaviour
     // Start is called before the first frame update
     protected virtual void Start()
     {
-        currentHealth = maxHealth;
+        // 저장된 데이터에서 로드된 경우 HP 초기화 스킵
+        if (!_isLoadedFromSave)
+        {
+            currentHealth = maxHealth;
+        }
 
         if(healthBar != null)
         {
             healthBar.SetMaxHealth(maxHealth);
+            healthBar.SetHealth(currentHealth);
         }
 
-        homePos = transform.position;
+        // 홈 포지션 저장 (아직 설정되지 않은 경우)
+        if (homePos == Vector3.zero)
+        {
+            homePos = transform.position;
+        }
 
         GameObject _p = GameObject.FindGameObjectWithTag("Player");
         if (_p != null)
@@ -277,8 +286,58 @@ public class EnemyAI : MonoBehaviour
     private System.Collections.IEnumerator DespawnAfter(float delay)
     {
         yield return new WaitForSeconds(delay);
-        Destroy(gameObject);
+        // Destroy 대신 SetActive(false)로 변경 - 저장 추적 가능
+        gameObject.SetActive(false);
     }
+
+    #region Save/Load Methods
+
+    public virtual MonsterSaveData GetSaveData()
+    {
+        MonsterSaveData data = new MonsterSaveData();
+        data.monsterId = definition != null ? definition.monsterId : enemyId;
+        data.isDead = isDead || !gameObject.activeSelf;
+        data.currentHealth = currentHealth;
+        data.SetPosition(transform.position);
+        data.SetHomePosition(homePos);
+        data.currentStateName = GetCurrentStateName();
+        data.bossPhase = 0;
+        return data;
+    }
+
+    public virtual void ApplyLoadedData(MonsterSaveData data)
+    {
+        _isLoadedFromSave = true;
+        enemyId = data.monsterId;
+        currentHealth = data.currentHealth;
+        homePos = data.GetHomePosition();
+
+        if (data.isDead)
+        {
+            isDead = true;
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            // 위치 복원
+            transform.position = data.GetPosition();
+            if (_agent != null && _agent.isOnNavMesh)
+            {
+                _agent.Warp(data.GetPosition());
+            }
+
+            gameObject.SetActive(true);
+        }
+    }
+
+    public string GetCurrentStateName()
+    {
+        if (StateMachine == null || StateMachine.GetState() == null)
+            return "Idle";
+        return StateMachine.GetState().GetType().Name;
+    }
+
+    #endregion
 
     // 보스의 Phase 2를 위한 함수
     protected virtual void OnDamaged(int damage)

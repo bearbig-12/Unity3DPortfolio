@@ -52,7 +52,7 @@ public class BossAoeHitbox : MonoBehaviour
         {
             if (boss != null)
             {
-                player.TakeDamage(boss.attackDamage);
+                player.TakeDamage(boss.currentAttackDamage);
             }
             _nextTickTime = Time.time + tickInterval;
         }
