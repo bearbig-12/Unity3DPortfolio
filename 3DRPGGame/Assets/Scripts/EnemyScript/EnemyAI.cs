@@ -248,6 +248,11 @@ public class EnemyAI : MonoBehaviour
 
         currentHealth -= damage;
 
+        if (DamagePopupManager.Instance != null)
+        {
+            DamagePopupManager.Instance.ShowDamage(damage, transform.position, DamageType.Normal);
+        }
+
         if (Time.time >= _nextHitAllowedTime && !_isHitPlaying)
         {
             _nextHitAllowedTime = Time.time + hitCooldown;

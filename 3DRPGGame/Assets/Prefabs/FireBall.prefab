@@ -155,6 +155,10 @@ MonoBehaviour:
   obstacleMask:
     serializedVersion: 2
     m_Bits: 768
+  damagePlayer: 1
+  enemyMask:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!1001 &1053445713785356370
 PrefabInstance:
   m_ObjectHideFlags: 0

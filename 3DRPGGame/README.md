@@ -22,6 +22,47 @@ Unity 기반 3D RPG 게임 포트폴리오 프로젝트
 
 ## 성능 테스트 결과
 
+### Object Pooling 시스템
+
+#### 오브젝트 풀링이란?
+
+게임에서 오브젝트(총알, 이펙트, 적 등)를 자주 생성/파괴하면 다음 문제가 발생합니다:
+
+1. **Instantiate/Destroy 비용**: 매번 메모리 할당/해제 발생
+2. **GC(가비지 컬렉션) 스파이크**: 파괴된 객체 정리 시 프레임 드랍
+3. **메모리 파편화**: 반복적인 할당/해제로 메모리 비효율
+
+**오브젝트 풀링**은 미리 오브젝트를 생성해두고 **재사용**하는 방식입니다:
+
+```
+[풀링 없음]
+발사 → Instantiate() → 충돌 → Destroy() → GC 부담
+
+[풀링 사용]
+발사 → Pool.Get() → 충돌 → Pool.Return() → 재사용 대기
+```
+
+#### 테스트 결과 (FireBall 100개 기준)
+
+| 항목 | 풀링 OFF | 풀링 ON | 개선 |
+|------|----------|---------|------|
+| Instantiate 호출 | 100 | **0** | -100% |
+| Destroy 호출 | 100 | **0** | -100% |
+| 메모리 사용량 | 19,904 KB | **8,424 KB** | **-57%** |
+
+#### 풀링 사용 효과
+
+- **메모리 절약**: 약 11.5MB 감소 (57%)
+- **GC 스파이크 제거**: Instantiate/Destroy 0회
+- **프레임 안정성**: 대량 오브젝트 발사 시에도 프레임 드랍 없음
+- **확장성**: 보스전, 탄막 패턴 등 대량 오브젝트 처리에 적합
+
+#### 적용 대상
+
+- FireBall (플레이어/보스 발사체)
+- ExplosionVFX (폭발 이펙트)
+- DamagePopup (데미지 숫자 UI)
+
 ### Save/Load 시스템 (JSON)
 
 | 몬스터 수 | Save 시간 | Save 메모리 | Load 시간 | Load 메모리 |
@@ -54,15 +95,18 @@ Unity 기반 3D RPG 게임 포트폴리오 프로젝트
 
 ```
 Assets/Scripts/
-├── Player/          - 플레이어 상태 및 컨트롤러
-├── EnemyScript/     - 적 AI 및 보스 시스템
-├── Inventory/       - 인벤토리 관리
-├── Quest/           - 퀘스트 시스템
-├── Skills/          - 스킬트리 시스템
-├── Shop/            - 상점 시스템
-├── Save/            - 세이브/로드 시스템
-├── QuickSlot/       - 퀵슬롯 시스템
-└── Environment/     - 환경 상호작용
+├── Player/           - 플레이어 상태 및 컨트롤러
+├── EnemyScript/      - 적 AI 및 보스 시스템
+├── Inventory/        - 인벤토리 관리
+├── Quest/            - 퀘스트 시스템
+├── Skills/           - 스킬트리 시스템
+├── Shop/             - 상점 시스템
+├── Save/             - 세이브/로드 시스템
+├── QuickSlot/        - 퀵슬롯 시스템
+├── Pool/             - 오브젝트 풀링 시스템
+├── UI/               - 데미지 팝업 등 UI 시스템
+├── SceneManagement/  - 비동기 씬 로딩 시스템
+└── Environment/      - 환경 상호작용
 ```
 
 ## 사용된 디자인 패턴
@@ -71,4 +115,64 @@ Assets/Scripts/
 - **Singleton Pattern**: 게임 매니저 클래스
 - **Observer Pattern**: 이벤트 기반 통신
 - **Strategy Pattern**: 퍼지 로직 공격 선택
+- **Object Pool Pattern**: 오브젝트 재사용으로 GC 부담 감소
 - **Data-Driven Design**: ScriptableObject 기반 몬스터 정의
+
+## 버그 수정 기록
+
+### FireBall 플레이어 데미지 미적용 버그
+
+**문제**: 보스가 발사한 FireBall이 플레이어에게 충돌해도 데미지가 적용되지 않음
+
+**원인**: `ApplyExplosionDamage()` 메서드에서 거리/장애물 체크만 하고 실제 `TakeDamage()` 호출이 누락됨
+
+**파일**: `Assets/Scripts/EnemyScript/FireBall.cs`
+
+**수정 전**:
+```csharp
+private void ApplyExplosionDamage(Vector3 position)
+{
+    if (damagePlayer)
+    {
+        if (_player == null) return;
+
+        Vector3 playerPos = _player.transform.position;
+        Vector3 dir = playerPos - position;
+        float dist = Vector3.Distance(position, playerPos);
+
+        if (dist > explosionRadius) return;
+
+        if (Physics.Raycast(position, dir.normalized, dist, obstacleMask))
+            return;
+
+        // 여기서 끝 - TakeDamage() 호출 없음!
+    }
+    // ...
+}
+```
+
+**수정 후**:
+```csharp
+private void ApplyExplosionDamage(Vector3 position)
+{
+    if (damagePlayer)
+    {
+        if (_player == null) return;
+
+        Vector3 playerPos = _player.transform.position;
+        Vector3 dir = playerPos - position;
+        float dist = Vector3.Distance(position, playerPos);
+
+        if (dist > explosionRadius) return;
+
+        if (Physics.Raycast(position, dir.normalized, dist, obstacleMask))
+            return;
+
+        // 플레이어에게 데미지 적용 (추가됨)
+        _player.TakeDamage(_damage);
+    }
+    // ...
+}
+```
+
+**결과**: 보스 FireBall이 플레이어에게 정상적으로 데미지 적용됨

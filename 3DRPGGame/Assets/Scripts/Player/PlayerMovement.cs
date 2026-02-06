@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     public float finalSpeed;
     public bool isRunning;
 
-    // ¹è±×¿¡¼­ Åä±Û Ä«¸Þ¶ó È¸Àü ±â´É
+    // ï¿½ï¿½×¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ Ä«ï¿½Þ¶ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½
     public bool toggleCameraRotation;
     public float smoothness = 10f;
 
@@ -45,21 +45,21 @@ public class PlayerMovement : MonoBehaviour
     public StaminaBar _staminaBar;
     private int _baseMaxStamina;
 
-    float staminaTick = 1.0f;      // 1ÃÊ¸¶´Ù È¸º¹/°¨¼Ò
+    float staminaTick = 1.0f;      // 1ï¿½Ê¸ï¿½ï¿½ï¿½ È¸ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½
     float staminaTimer = 0.0f;
 
     [Header("Weapon Info")]
-    public Transform weaponRoot;// ¹«±â ½ÃÀÛ À§Ä¡
-    public Transform weaponTip; // ¹«±â ³¡ À§Ä¡
-    public float bladeRadius = 0.12f; // Ä® µÎ²²
+    public Transform weaponRoot;// ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ä¡
+    public Transform weaponTip; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½Ä¡
+    public float bladeRadius = 0.12f; // Ä® ï¿½Î²ï¿½
     public LayerMask enemyLayer;
     public int attackDamage = 20;
     private int _baseAttackDamage;
 
-    // ½ºÅ³ »ç¿ëÁß¿¡´Â ´Ù¸¥ µ¿ÀÛ ¸øÇÏ°Ô
+    // ï¿½ï¿½Å³ ï¿½ï¿½ï¿½ï¿½ß¿ï¿½ï¿½ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ï°ï¿½
     public bool isCastingSkill = false;
 
-    [SerializeField] private float hitLockDuration = 0.5f; // Hit ¿¡´Ï¸ÞÀÌ¼Ç Àç»ý ½Ã°£
+    [SerializeField] private float hitLockDuration = 0.5f; // Hit ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½
     [SerializeField] private float hitCooldown = 1f;
     private float _hitLockEndTime = 0f;
     private float _nextHitAllowedTime = 0f;
@@ -120,7 +120,7 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Ä«¸Þ¶ó È¸Àü Åä±Û 
+        // Ä«ï¿½Þ¶ï¿½ È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ 
         if (Input.GetKey(KeyCode.LeftAlt))
         {
             toggleCameraRotation = true;
@@ -144,7 +144,7 @@ public class PlayerMovement : MonoBehaviour
 
 
 
-        // ´Þ¸®±â
+        // ï¿½Þ¸ï¿½ï¿½ï¿½
         bool canRun = _currentStamina > 0;
         if ((canRun))
         {
@@ -155,7 +155,7 @@ public class PlayerMovement : MonoBehaviour
             isRunning = false;
         }
 
-        // ÀÎº¥Åä¸® Ã¢ÀÌ ÄÑÁ® ÀÖ´ÂÁö ¿©ºÎ
+        // ï¿½Îºï¿½ï¿½ä¸® Ã¢ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         bool inventoryOpen = InventorySystem.instance != null && InventorySystem.instance.IsOpen;
 
         if (_attackTimer > 0)
@@ -170,7 +170,7 @@ public class PlayerMovement : MonoBehaviour
             return; 
         }
 
-        // ÀÌµ¿ ÀÔ·Â Ãà ÀúÀå (WASD/ÆÐµå µî)
+        // ï¿½Ìµï¿½ ï¿½Ô·ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (WASD/ï¿½Ðµï¿½ ï¿½ï¿½)
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         MoveInput = new Vector2(h, v);
@@ -186,7 +186,7 @@ public class PlayerMovement : MonoBehaviour
         else if (Input.GetMouseButtonDown(0))
         {
             var currentState = StateMachine.GetState();
-            // °ø°Ý ÁßÀÌ ¾Æ´Ò¶§¸¸ °ø°Ý1·Î ÀüÈ¯, °ø°Ý ÁßÀÌ¸é ÄÞº¸·Î ³Ñ¾î°¨
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Ò¶ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½1ï¿½ï¿½ ï¿½ï¿½È¯, ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½Þºï¿½ï¿½ï¿½ ï¿½Ñ¾î°¨
             if (_currentStamina > 0 &&
                 _attackTimer <= 0 &&
                 !(currentState == Attack1State) &&
@@ -210,7 +210,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 ChangeStamina(-5);
             }
-            // ¿òÁ÷ÀÌÁö ¾Ê°Å³ª °È±âÀÏ ¶§ ½ºÅÂ¹Ì³ª È¸º¹
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê°Å³ï¿½ ï¿½È±ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½Â¹Ì³ï¿½ È¸ï¿½ï¿½
             else if (!isRunning && !isAttacking && !isRolling && _currentStamina < _maxStamina)
             {
                 ChangeStamina(+5);
@@ -243,7 +243,7 @@ public class PlayerMovement : MonoBehaviour
     public void Move(float moveSpeed)
     {
 
-        // ¿ùµå ±âÁØ Àü/¿ì ¹æÇâ
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½/ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
 
@@ -251,21 +251,21 @@ public class PlayerMovement : MonoBehaviour
 
         if (_characterController.isGrounded && _velocity.y < 0f)
         {
-            _velocity.y = -2f; // ¹Ù´Ú ºÙÀÌ±â
+            _velocity.y = -2f; // ï¿½Ù´ï¿½ ï¿½ï¿½ï¿½Ì±ï¿½
         }
 
         _velocity.y += gravity * Time.deltaTime;
 
         Vector3 FinalMove = (moveDirection.normalized * moveSpeed) + _velocity;
 
-        // CharacterController·Î ½ÇÁ¦ ÀÌµ¿
+        // CharacterControllerï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ìµï¿½
         _characterController.Move(FinalMove * Time.deltaTime);
 
 
-        // ¾Ö´Ï¸ÞÀÌ¼Ç ÆÄ¶ó¹ÌÅÍ ¼³Á¤
+        // ï¿½Ö´Ï¸ï¿½ï¿½Ì¼ï¿½ ï¿½Ä¶ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         float speedMul = isRunning ? 1.0f : 0.5f;
 
-        // MoveInput.x = ÁÂ¿ì, MoveInput.y = ¾ÕµÚ
+        // MoveInput.x = ï¿½Â¿ï¿½, MoveInput.y = ï¿½Õµï¿½
         float animX = MoveInput.x * speedMul;
         float animY = MoveInput.y * speedMul;
 
@@ -281,20 +281,20 @@ public class PlayerMovement : MonoBehaviour
         _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
     }
 
-    // ÇöÀç ÀÔ·ÂÀÌ ÀÖ´ÂÁö ¿©ºÎ (Idle ¡æ Walk/Run ÀüÈ¯¿¡ »ç¿ë)
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (Idle ï¿½ï¿½ Walk/Run ï¿½ï¿½È¯ï¿½ï¿½ ï¿½ï¿½ï¿½)
     public bool HasMoveInput()
     {
         return MoveInput.sqrMagnitude > 0.01f;
     }
 
-    // °ø°Ý Áß¿¡´Â ÀÌµ¿ ¸øÇÏ°Ô ¼³Á¤
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ß¿ï¿½ï¿½ï¿½ ï¿½Ìµï¿½ ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½ï¿½ï¿½ï¿½
     public void SetAttacking(bool value)
     {
         isAttacking = value;
 
         if (value)
         {
-            // °ø°Ý ½ÃÀÛÇÒ ¶§ ÀÔ·Â/¾Ö´Ï °ª Àá±ñ 0À¸·Î
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½Ô·ï¿½/ï¿½Ö´ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ 0ï¿½ï¿½ï¿½ï¿½
             MoveInput = Vector2.zero;
             _animator.SetFloat("MoveX", 0f, 0.1f, Time.deltaTime);
             _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
@@ -307,7 +307,7 @@ public class PlayerMovement : MonoBehaviour
         _nextHitAllowedTime = Time.time + hitCooldown;
         _isHitPlaying = true;
 
-        // °ø°Ý »óÅÂ °­Á¦ Á¾·á
+        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         _attackActive = false;
         _enemiesHit.Clear();
         SetAttacking(false);
@@ -326,6 +326,11 @@ public class PlayerMovement : MonoBehaviour
     {
         _currentHealth -= damage;
         _healthbar.SetHealth(_currentHealth);
+
+        if (DamagePopupManager.Instance != null)
+        {
+            DamagePopupManager.Instance.ShowDamage(damage, transform.position, DamageType.Normal);
+        }
 
         if (Time.time >= _nextHitAllowedTime && !_isHitPlaying)
         {
@@ -346,9 +351,9 @@ public class PlayerMovement : MonoBehaviour
     }
     public void AnimEvent_AttackStart()
     {
-        if (_attackActive) return;   // Áßº¹ È£Ãâ ¹æÁö
+        if (_attackActive) return;   // ï¿½ßºï¿½ È£ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         _attackActive = true;
-        _enemiesHit.Clear();     // °°Àº °ø°Ý¿¡¼­ Áßº¹ È÷Æ® ¹æÁö
+        _enemiesHit.Clear();     // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ ï¿½ßºï¿½ ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½
     }
 
     public void AnimEvent_AttackEnd()
@@ -410,7 +415,7 @@ public class PlayerMovement : MonoBehaviour
                 continue;
             }
 
-            // ÀÌ¹ø °ø°Ý¿¡¼­ Ã³À½ ¸Â´Â Àû¸¸
+            // ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½Â´ï¿½ ï¿½ï¿½ï¿½ï¿½
             if (_enemiesHit.Add(enemy))
             {
                 Debug.Log("Hit Enemy: " + enemy.name);
@@ -511,6 +516,11 @@ public class PlayerMovement : MonoBehaviour
             _currentHealth += amount;
             if (_currentHealth > _maxHealth) _currentHealth = _maxHealth;
             if (_healthbar != null) _healthbar.SetHealth(_currentHealth);
+
+            if (DamagePopupManager.Instance != null)
+            {
+                DamagePopupManager.Instance.ShowHeal(amount, transform.position);
+            }
         }
         else if (type == HealType.Stamina)
         {

@@ -1,0 +1,58 @@
+# Unity 프로젝트용 Git 설정
+
+# 스크립트 파일 UTF-8 인코딩 강제
+*.cs text eol=lf encoding=utf-8
+
+# Unity 메타 파일
+*.meta text eol=lf
+
+# Unity 에셋 파일 (바이너리)
+*.unity binary
+*.prefab binary
+*.asset binary
+*.mat binary
+*.anim binary
+*.controller binary
+*.overrideController binary
+*.physicMaterial binary
+*.physicsMaterial2D binary
+*.playable binary
+*.mask binary
+*.brush binary
+*.flare binary
+*.fontsettings binary
+*.guiskin binary
+*.giparams binary
+*.renderTexture binary
+*.spriteatlas binary
+*.terrainlayer binary
+*.mixer binary
+*.shadervariants binary
+
+# 이미지 파일
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.psd binary
+*.tga binary
+*.tif binary
+*.tiff binary
+*.bmp binary
+*.exr binary
+*.hdr binary
+
+# 오디오 파일
+*.mp3 binary
+*.ogg binary
+*.wav binary
+
+# 3D 모델 파일
+*.fbx binary
+*.obj binary
+*.blend binary
+*.dae binary
+
+# 폰트 파일
+*.ttf binary
+*.otf binary

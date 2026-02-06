@@ -117,7 +117,15 @@ public class PlayerSkillCaster : MonoBehaviour
         Vector3 targetPos = player.transform.position + player.transform.forward * fireBallRange;
         targetPos.y = player.transform.position.y + aimHeightOffset;
 
-        GameObject obj = Instantiate(fireBallPrefab, spawnPos, Quaternion.identity);
+        GameObject obj = null;
+        if (ObjectPoolManager.Instance != null)
+        {
+            obj = ObjectPoolManager.Instance.Get("fireball", spawnPos, Quaternion.identity);
+        }
+        if (obj == null)
+        {
+            obj = Instantiate(fireBallPrefab, spawnPos, Quaternion.identity);
+        }
 
         Collider fireBallColl = obj.GetComponent<Collider>();
         Collider playerColl = player.GetComponent<Collider>();

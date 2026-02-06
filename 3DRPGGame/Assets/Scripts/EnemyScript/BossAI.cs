@@ -151,9 +151,17 @@ public class BossAI : EnemyAI
         {
             Vector3 spawnPos = rightHandPos.position;
             Vector3 targetPos = _player.position;
-            targetPos.y = _player.position.y + 1.0f; 
+            targetPos.y = _player.position.y + 1.0f;
 
-            GameObject obj = Instantiate(fireBallPrefab, spawnPos, Quaternion.identity);
+            GameObject obj = null;
+            if (ObjectPoolManager.Instance != null)
+            {
+                obj = ObjectPoolManager.Instance.Get("fireball", spawnPos, Quaternion.identity);
+            }
+            if (obj == null)
+            {
+                obj = Instantiate(fireBallPrefab, spawnPos, Quaternion.identity);
+            }
 
             Collider FireBallColl = obj.GetComponent<Collider>();
             Collider BossColl = GetComponent<Collider>();
