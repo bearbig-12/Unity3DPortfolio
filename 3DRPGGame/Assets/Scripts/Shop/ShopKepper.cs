@@ -14,9 +14,11 @@ public class ShopKepper : MonoBehaviour
     private enum ShopState
     {
         Closed,
+        Greeting,
         Dialog,
         Buy,
-        Sell
+        Sell,
+        Farewell
     }
 
     [SerializeField] private GameObject dialogUI;
@@ -31,6 +33,10 @@ public class ShopKepper : MonoBehaviour
     [SerializeField] private Button questBtn;
     [SerializeField] private DialogueUI dialogueUI;
     [SerializeField] private List<QuestData> questOrder = new List<QuestData>();
+
+    [Header("NPC Dialogue")]
+    [SerializeField] private NPCDialogueUI npcDialogueUI;
+    [SerializeField] private NPCDialogueData npcDialogueData;
 
     private ShopState state = ShopState.Closed;
 
@@ -102,12 +108,19 @@ public class ShopKepper : MonoBehaviour
 
     public void Interact()
     {
-        SetState(ShopState.Dialog);
+        SetState(ShopState.Greeting);
     }
 
     public void StopInteract()
     {
-        SetState(ShopState.Closed);
+        if (state != ShopState.Closed && state != ShopState.Farewell)
+        {
+            SetState(ShopState.Farewell);
+        }
+        else
+        {
+            SetState(ShopState.Closed);
+        }
     }
 
     private void ShowDialogUI()
@@ -162,12 +175,22 @@ public class ShopKepper : MonoBehaviour
         {
             case ShopState.Closed:
                 HideDialogUI();
+                HideNPCDialogue();
                 buyPanelUI.SetActive(false);
                 sellPanelUI.SetActive(false);
                 isShop = false;
 
                 break;
+            case ShopState.Greeting:
+                HideDialogUI();
+                buyPanelUI.SetActive(false);
+                sellPanelUI.SetActive(false);
+                isShop = true;
+                ShowNPCGreeting();
+
+                break;
             case ShopState.Dialog:
+                HideNPCDialogue();
                 ShowDialogUI();
                 buyPanelUI.SetActive(false);
                 sellPanelUI.SetActive(false);
@@ -186,6 +209,14 @@ public class ShopKepper : MonoBehaviour
                 buyPanelUI.SetActive(false);
                 sellPanelUI.SetActive(true);
                 isShop = true;
+
+                break;
+            case ShopState.Farewell:
+                HideDialogUI();
+                buyPanelUI.SetActive(false);
+                sellPanelUI.SetActive(false);
+                isShop = true;
+                ShowFarewellDialogue();
 
                 break;
         }
@@ -221,7 +252,7 @@ public class ShopKepper : MonoBehaviour
             playerInRange = false;
             if (state != ShopState.Closed)
             {
-                StopInteract();
+                SetState(ShopState.Closed);
             }
             else
             {
@@ -292,5 +323,63 @@ public class ShopKepper : MonoBehaviour
         }
 
         dialogueUI.Show($"Quest: {q.title}", "This quest is already completed.");
+    }
+
+    private void ShowNPCGreeting()
+    {
+        if (npcDialogueUI == null || npcDialogueData == null)
+        {
+            OnGreetingComplete();
+            return;
+        }
+
+        string greeting = "";
+        if (npcDialogueData.greetingLines != null && npcDialogueData.greetingLines.Length > 0)
+        {
+            greeting = npcDialogueData.greetingLines[0];
+        }
+
+        npcDialogueUI.Show(npcDialogueData.npcName, greeting, OnGreetingComplete);
+    }
+
+    private void ShowFarewellDialogue()
+    {
+        if (npcDialogueUI == null || npcDialogueData == null)
+        {
+            OnFarewellComplete();
+            return;
+        }
+
+        string farewell = "";
+        if (npcDialogueData.farewellLines != null && npcDialogueData.farewellLines.Length > 0)
+        {
+            farewell = npcDialogueData.farewellLines[0];
+        }
+
+        npcDialogueUI.Show(npcDialogueData.npcName, farewell, OnFarewellComplete);
+    }
+
+    private void HideNPCDialogue()
+    {
+        if (npcDialogueUI != null)
+        {
+            npcDialogueUI.Hide();
+        }
+    }
+
+    private void OnGreetingComplete()
+    {
+        if (state == ShopState.Greeting)
+        {
+            SetState(ShopState.Dialog);
+        }
+    }
+
+    private void OnFarewellComplete()
+    {
+        if (state == ShopState.Farewell)
+        {
+            SetState(ShopState.Closed);
+        }
     }
 }
