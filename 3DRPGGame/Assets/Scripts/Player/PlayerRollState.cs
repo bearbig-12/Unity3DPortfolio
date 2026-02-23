@@ -4,7 +4,7 @@ public class PlayerRollState : State
 {
     private PlayerMovement _player;
 
-    private float _rollTime = 1.15f;    // ±¸¸£±â Áö¼Ó ½Ã°£ (¾Ö´Ï ±æÀÌ¿¡ ¸ÂÃç ¼öÁ¤ °¡´É)
+    private float _rollTime = 1.15f;    // ë¡¤ë§ ìµœëŒ€ ì‹œê°„ (ì• ë‹ˆë©”ì´ì…˜ ê¸¸ì´ì— ë§ê²Œ ì¡°ì • í•„ìš”)
     private float _elapsed = 0f;
     private Vector3 _rollDir;
 
@@ -21,7 +21,7 @@ public class PlayerRollState : State
         _player.ChangeStamina(-15);
 
 
-        // ±¸¸£´Â ¹æÇâ °áÁ¤ (ÀÔ·Â ÀÖÀ¸¸é ±× ¹æÇâ, ¾øÀ¸¸é Á¤¸é)
+        // ë¡¤ë§ ë°©í–¥ ê²°ì • (ì…ë ¥ ë°©í–¥ì´ ìˆìœ¼ë©´ ê·¸ ë°©í–¥, ì—†ìœ¼ë©´ ì „ë°©í–¥)
         if (_player.HasMoveInput())
         {
             Vector3 forward = _player.transform.TransformDirection(Vector3.forward);
@@ -37,7 +37,7 @@ public class PlayerRollState : State
 
         _player._animator.SetTrigger("Roll");
 
-        // ±¸¸£´Â µ¿¾È ÀÌµ¿  ÆÄ¶ó¹ÌÅÍ¸¦ 0À¸·Î Àá±ÅÁØ´Ù
+        // ë¡¤ë§ ì¤‘ì—ëŠ” ì´ë™ íŒŒë¼ë¯¸í„°ë¥¼ 0ìœ¼ë¡œ ì´ˆê¸°í™”
         _player._animator.SetFloat("MoveX", 0f);
         _player._animator.SetFloat("MoveY", 0f);
     }

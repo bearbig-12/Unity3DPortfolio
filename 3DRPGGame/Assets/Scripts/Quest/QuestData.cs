@@ -29,7 +29,7 @@ public class QuestData : ScriptableObject
     [TextArea] public string description;
 
     [Header("Prerequisite")]
-    public string prerequisiteQuestId; // ¼±Çà Äù½ºÆ® (¾øÀ¸¸é ºóÄ­)
+    public string prerequisiteQuestId; // ì„ í–‰ í€˜ìŠ¤íŠ¸ ID (ë¹„ì–´ìˆìœ¼ë©´ ì¡°ê±´ ì—†ìŒ)
 
     [Header("Objectives")]
     public List<QuestObjective> objectives = new List<QuestObjective>();

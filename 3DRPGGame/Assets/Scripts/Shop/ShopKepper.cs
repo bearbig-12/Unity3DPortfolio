@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,14 +30,14 @@ public class ShopKepper : MonoBehaviour
 
 
     [SerializeField] private Button questBtn;
-    [SerializeField] private DialogueUI dialogueUI;
-    [SerializeField] private List<QuestData> questOrder = new List<QuestData>();
 
     [Header("NPC Dialogue")]
     [SerializeField] private NPCDialogueUI npcDialogueUI;
     [SerializeField] private NPCDialogueData npcDialogueData;
 
     private ShopState state = ShopState.Closed;
+    private Camera _mainCamera;
+    private QuestGiver _questGiver;
 
     private bool isShop = false;
 
@@ -49,6 +48,8 @@ public class ShopKepper : MonoBehaviour
 
     private void Start()
     {
+        _mainCamera = Camera.main;
+        _questGiver = GetComponent<QuestGiver>();
         SetState(ShopState.Closed);
     }
 
@@ -97,13 +98,13 @@ public class ShopKepper : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (interactUI == null)
+        if (interactUI == null || _mainCamera == null)
         {
             return;
         }
 
         interactUI.transform.position = transform.position + interactUIOffset;
-        interactUI.transform.forward = Camera.main.transform.forward;
+        interactUI.transform.forward = _mainCamera.transform.forward;
     }
 
     public void Interact()
@@ -141,11 +142,6 @@ public class ShopKepper : MonoBehaviour
     private void SellMode()
     {
         SetState(ShopState.Sell);
-    }
-
-    private void DialogMode()
-    {
-        SetState(ShopState.Dialog);
     }
 
     private void SetState(ShopState nextState)
@@ -274,55 +270,8 @@ public class ShopKepper : MonoBehaviour
 
     private void QuestMode()
     {
-        Debug.Log("QuestMode called");
-
-        if (QuestManager.Instance == null || dialogueUI == null)
-            return;
-
-        QuestData q = QuestManager.Instance.GetCurrentQuest(questOrder);
-
-        if (q == null)
-        {
-            dialogueUI.Show("Quest", "There are no quests available right now.");
-            return;
-        }
-
-        var status = QuestManager.Instance.GetStatus(q.questId);
-
-        if (status == QuestStatus.Available)
-        {
-            dialogueUI.Show(
-                $"Quest: {q.title}",
-                q.description,
-                () => QuestManager.Instance.StartQuest(q.questId),
-                true
-            );
-            return;
-        }
-
-        if (status == QuestStatus.InProgress)
-        {
-            var obj = QuestManager.Instance.GetCurrentObjective(q.questId);
-
-            if (obj != null && obj.type == QuestObjectiveType.RequiredItem)
-            {
-                bool requiredItem = QuestManager.Instance.SubmitRequiredItem(q.questId);
-                dialogueUI.Show(
-                    $"Quest: {q.title}",
-                    requiredItem ? "Great. Proceed to the next objective." : "Please bring the required item."
-                );
-                return;
-            }
-
-            if (obj != null && obj.type == QuestObjectiveType.Kill)
-            {
-                int c = QuestManager.Instance.GetCount(q.questId);
-                dialogueUI.Show($"Quest: {q.title}", $"Progress: {c}/{obj.requiredCount}");
-                return;
-            }
-        }
-
-        dialogueUI.Show($"Quest: {q.title}", "This quest is already completed.");
+        if (_questGiver != null)
+            _questGiver.Interact();
     }
 
     private void ShowNPCGreeting()

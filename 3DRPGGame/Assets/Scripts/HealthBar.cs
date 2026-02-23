@@ -6,9 +6,9 @@ using UnityEngine.UI;
 public class HealthBar : MonoBehaviour
 {
     public Slider _slider;
-    
-    private float _targetValue;
 
+    private float _targetValue;
+    private bool _isAnimating;
 
     private void Start()
     {
@@ -17,7 +17,16 @@ public class HealthBar : MonoBehaviour
 
     void Update()
     {
+        if (!_isAnimating) return;
+
         _slider.value = Mathf.Lerp(_slider.value, _targetValue, Time.deltaTime * 10f);
+
+        // 목표값에 거의 도달하면 애니메이션 중지
+        if (Mathf.Abs(_slider.value - _targetValue) < 0.01f)
+        {
+            _slider.value = _targetValue;
+            _isAnimating = false;
+        }
     }
 
 
@@ -31,6 +40,7 @@ public class HealthBar : MonoBehaviour
     public void SetHealth(int health)
     {
         _targetValue = health;
+        _isAnimating = true;
     }
 
 }

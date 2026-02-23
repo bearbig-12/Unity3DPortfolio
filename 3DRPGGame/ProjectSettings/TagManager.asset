@@ -7,6 +7,7 @@ TagManager:
   - Enemy
   - Shop
   - Weapon
+  - NPC
   layers:
   - Default
   - TransparentFX
@@ -18,7 +19,7 @@ TagManager:
   - Player
   - Wall
   - Ground
-  - 
+  - MiniMap
   - 
   - 
   - 

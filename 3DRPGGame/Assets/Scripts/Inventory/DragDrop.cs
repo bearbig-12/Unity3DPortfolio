@@ -10,10 +10,10 @@ public class DragDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
 {
     [SerializeField] private Canvas canvas;
     private RectTransform _rectTransform;
-    // ¾ÆÀÌÅÛÀÇ Åõ¸íµµ Á¶Àı ¹× Raycast ¼³Á¤À» À§ÇÑ CanvasGroup
+    // ë“œë˜ê·¸ ì¤‘ íˆ¬ëª…ë„ ì¡°ì ˆ ë° Raycast ì°¨ë‹¨ì„ ìœ„í•œ CanvasGroup
     private CanvasGroup _canvasGroup;
 
-    public static GameObject itemBeingDragged; // ÇöÀç µå·¡±× ÁßÀÎ ¾ÆÀÌÅÛ
+    public static GameObject itemBeingDragged; // í˜„ì¬ ë“œë˜ê·¸ ì¤‘ì¸ ì•„ì´í…œ
     Vector3 startPos;
     Transform startParent;
 
@@ -44,7 +44,7 @@ public class DragDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
 
 
         _canvasGroup.alpha = 0.6f;
-        // ÇöÀç µé°íÀÖ´Â ¾ÆÀÌÅÛ UI°¡ Raycast¸¦ ¸·Áö ¾Êµµ·Ï ¼³Á¤ (µå·Ó °¡´ÉÇÑ ½½·ÔÀ» Å¬¸¯ÇÒ ¼ö ÀÖµµ·Ï)
+        // ë“œë˜ê·¸ ì¤‘ì¸ ì•„ì´í…œì˜ UIê°€ Raycastë¥¼ ë°›ì§€ ì•Šë„ë¡ ì„¤ì • (ì•„ë˜ ìŠ¬ë¡¯ì´ ë“œë¡­ì„ í´ë¦­í•  ìˆ˜ ìˆë„ë¡)
         _canvasGroup.blocksRaycasts = false;
         startPos = transform.position;
         startParent = transform.parent;
@@ -56,8 +56,8 @@ public class DragDrop : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDrag
     public void OnDrag(PointerEventData eventData)
     {
         Debug.Log("OnDrag");
-        // eventData.delta : ¸¶¿ì½º°¡ ÀÌµ¿ÇÑ °Å¸®
-        // canvas.scaleFactor : Äµ¹ö½ºÀÇ ½ºÄÉÀÏ ºñÀ²/ UI ´Â Canvas ÀÇ ½ºÄÉÀÏ ¿µÇâÀ» ¹Ş±â ¶§¹®¿¡ ÀÌ¸¦ ³ª´²Áà¾ß Á¤È®ÇÑ À§Ä¡·Î ÀÌµ¿
+        // eventData.delta : ë§ˆìš°ìŠ¤ì˜ ì´ë™í•œ ê±°ë¦¬
+        // canvas.scaleFactor : ìº”ë²„ìŠ¤ì˜ ìŠ¤ì¼€ì¼ ë¹„ìœ¨ / UIê°€ Canvasì˜ ìŠ¤ì¼€ì¼ ì˜í–¥ì„ ë°›ê¸° ë•Œë¬¸ì— ë‚˜ëˆ ì¤˜ì•¼ ì •í™•í•œ ìœ„ì¹˜ë¡œ ì´ë™
         _rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
     }
 

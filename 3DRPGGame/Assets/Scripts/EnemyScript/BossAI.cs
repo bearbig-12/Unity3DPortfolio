@@ -54,7 +54,7 @@ public class BossAI : EnemyAI
     public GameObject fireBallPrefab;
     public Transform rightHandPos;
     public float fireBallLifeTime = 5f;
-    public float aimHeightOffset = 1.0f; // ���� ����
+    public float aimHeightOffset = 1.0f; // 조준 높이
 
     private float _nextMeleeTime;
     private float _nextRangedTime;
@@ -63,7 +63,6 @@ public class BossAI : EnemyAI
     protected override void Start()
     {
         base.Start();
-        // expReward는 이제 MonsterDefinition SO에서 설정
     }
 
 
@@ -140,7 +139,7 @@ public class BossAI : EnemyAI
     {
         if (_rangedFireHandEffect != null)
         {
-            // ���ο� ��ƼŬ ȿ���� ������ �ʰ� ���� ��ƼŬ ȿ���� �ڿ������� ���������
+            // 새로운 파티클 효과를 시작하지 않고 현재 파티클 효과가 자연스럽게 소멸되도록
             _rangedFireHandEffect.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
     }
@@ -166,7 +165,6 @@ public class BossAI : EnemyAI
             Collider FireBallColl = obj.GetComponent<Collider>();
             Collider BossColl = GetComponent<Collider>();
 
-            // ���� �ݶ��̴��� ��Ƽ� ������ �� ����
             if (FireBallColl != null && BossColl != null)
             {
                 Physics.IgnoreCollision(FireBallColl, BossColl);

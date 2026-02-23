@@ -18,9 +18,9 @@ public static class FuzzyAttack
         float staMid = Tri(playerStamina, 20f, 50f, 80f);
         float staHigh = RShoulder(playerStamina, 65f, 100f);
 
-        // °­°ø°İ 
+        // ê°•ê³µê²© ì ìˆ˜
         float hardScore = 0f;
-        // ÀÏ¹İ °ø°İ
+        // ê¸°ë³¸ ê³µê²© ì ìˆ˜
         float basicScore = 0f;
 
         void RuleHard(float hpM, float staM)
@@ -35,40 +35,40 @@ public static class FuzzyAttack
             basicScore += w;
         }
 
-        //// enemy°¡ À¯¸®
+        //// enemyì˜ ìš°ì„¸
         //RuleHard(enemyAdv, staLow);
         //RuleHard(enemyAdv, staMid);
         //RuleHard(enemyAdv, staHigh);
 
-        //// HP Â÷ÀÌ ºñ½Á
+        //// HP ê· ë“± ìƒíƒœ
         //RuleHard(even, staLow);
         //RuleBasic(even, staMid);
         //RuleBasic(even, staHigh);
 
-        //// player°¡ À¯¸®
+        //// playerì˜ ìš°ì„¸
         //RuleHard(playerAdv, staLow);
         //RuleHard(playerAdv, staMid);
         //RuleBasic(playerAdv, staHigh);
 
 
-        // enemy°¡ À¯¸® -> ±âº» °ø°İ
+        // enemyì˜ ìš°ì„¸ -> ê¸°ë³¸ ê³µê²©
         RuleBasic(enemyAdv, staLow);
         RuleBasic(enemyAdv, staMid);
         RuleBasic(enemyAdv, staHigh);
 
-        // HP Â÷ÀÌ ºñ½Á (À¯Áö)
+        // HP ê· ë“± ìƒíƒœ (ì•½í™”)
         RuleBasic(even, staLow);
         RuleBasic(even, staMid);
         RuleHard(even, staHigh);
 
-        // player°¡ À¯¸® -> °­°ø°İ
+        // playerì˜ ìš°ì„¸ -> ê°•ê³µê²©
         RuleHard(playerAdv, staLow);
         RuleHard(playerAdv, staMid);
         RuleHard(playerAdv, staHigh);
 
         float total = hardScore + basicScore;
 
-        // È¤½Ã³ª °è»ê ¿À·ù ¹æÁö
+        // í˜¹ì€ ê°’ì´ ì—†ì„ ê²½ìš° ê¸°ë³¸ê°’
         if (total <= 0.0001f)
         {
             return 0.5f;
@@ -111,7 +111,7 @@ public static class FuzzyAttack
         {
             return 0f;
         }
-        // ±Ù»ç°ª Ã³¸®
+        // ê¼­ì§“ê°’ ì²˜ë¦¬
         if (Mathf.Approximately(x, b))
         {
             return 1f;

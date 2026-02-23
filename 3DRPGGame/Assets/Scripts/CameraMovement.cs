@@ -50,7 +50,7 @@ public class CameraMovement : MonoBehaviour
     {
         if(IsLockOn)
         {
-            //¶ô¿Â ÇØÁ¦
+            // ë½ì˜¨ í•´ì œ
             lockOnTarget = null;
             return;
         }
@@ -59,7 +59,7 @@ public class CameraMovement : MonoBehaviour
 
         if(hits.Length > 0)
         {
-            //°¡Àå °¡±î¿î Àû Ã£±â
+            // ê°€ìž¥ ê°€ê¹Œìš´ ì  ì°¾ê¸°
             float closestDistance = Mathf.Infinity;
 
             foreach(var hit in hits)
@@ -116,7 +116,7 @@ public class CameraMovement : MonoBehaviour
         else if(lockOnTarget != null)
         {
             Vector3 dir = lockOnTarget.position - transform.position;
-            dir.y = 0; // ¼öÁ÷ È¸Àü ¹æÁö
+            dir.y = 0; // ìˆ˜ì§ íšŒì „ ë°©ì§€
 
             if ((dir.sqrMagnitude > 0.001f))
             {

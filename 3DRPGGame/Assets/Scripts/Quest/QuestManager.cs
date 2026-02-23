@@ -34,7 +34,7 @@ public class QuestManager : MonoBehaviour
     }
     private void OnEnable()
     {
-        // ±¸µ¶
+        // ì´ë²¤íŠ¸ êµ¬ë…
         EnemyAI.OnEnemyKilled += OnEnemyKilled;
     }
 
@@ -120,7 +120,7 @@ public class QuestManager : MonoBehaviour
         }
     }
 
-    // Äù½ºÆ® ¾ÆÀÌÅÛ ¼ÒÀ¯ È®ÀÎ 
+    // í€˜ìŠ¤íŠ¸ ì œì¶œ ì•„ì´í…œ í™•ì¸
     public bool SubmitRequiredItem(string questId)
     {
         if (InventorySystem.instance == null) return false;
@@ -186,14 +186,14 @@ public class QuestManager : MonoBehaviour
     {
         if (questOrder == null) return null;
 
-        // ÁøÇà ÁßÀÎ Äù½ºÆ® ¿ì¼±
+        // ì§„í–‰ ì¤‘ì¸ í€˜ìŠ¤íŠ¸ ìš°ì„ 
         foreach (var q in questOrder)
         {
             if (q == null) continue;
             if (GetStatus(q.questId) == QuestStatus.InProgress) return q;
         }
 
-        // ÁøÇà °¡´ÉÇÑ Äù½ºÆ®
+        // ìˆ˜ë½ ê°€ëŠ¥í•œ í€˜ìŠ¤íŠ¸
         foreach (var q in questOrder)
         {
             if (q == null) continue;

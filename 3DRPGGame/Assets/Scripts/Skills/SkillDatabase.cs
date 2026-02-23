@@ -38,7 +38,7 @@ public class SkillDatabase : MonoBehaviour
         }
     }
 
-    // µñ¼Å³Ê¸® ¾È¿¡¼­ Æ¯Á¤ ½ºÅ³ Ã£¾Æ¿À±â
+    // ìŠ¤í‚¬ë‚˜ë¬´ ì•ˆì—ì„œ íŠ¹ì • ìŠ¤í‚¬ ì°¾ì•„ì˜¤ê¸°
     public SkillDefinition Get(string id)
     {
         if(_skills.TryGetValue(id, out var skill))

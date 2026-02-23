@@ -67,6 +67,7 @@ public class EnemyAI : MonoBehaviour
     private float _nextHitAllowedTime = 0f;
     private bool _isHitPlaying = false;
     private bool _isHitLocked = false;
+    private Camera _mainCamera;
 
     private bool IsHitLocked => _isHitLocked;
 
@@ -90,9 +91,11 @@ public class EnemyAI : MonoBehaviour
         }
 
 
-        _agent.angularSpeed = 360f;     
-        _agent.acceleration = 20f;      
-        _agent.autoBraking = true;      
+        _agent.angularSpeed = 360f;
+        _agent.acceleration = 20f;
+        _agent.autoBraking = true;
+
+        _mainCamera = Camera.main;
     }
 
     // Start is called before the first frame update
@@ -154,20 +157,19 @@ public class EnemyAI : MonoBehaviour
 
     protected virtual void LateUpdate()
     {
-        if (healthBar != null)
+        if (healthBar != null && _mainCamera != null)
         {
             healthBar.transform.position = transform.position + healthBarOffset;
-            healthBar.transform.forward = Camera.main.transform.forward;
+            healthBar.transform.forward = _mainCamera.transform.forward;
         }
-
     }
 
     protected virtual void Move()
     {
         float v = (_agent != null) ? _agent.velocity.magnitude : 0f;
 
-        bool moving = v > 0.05f;                 // �����̳�
-        bool running = (_agent != null && _agent.speed >= chaseSpeed - 0.1f); // �޸����(�ӵ��� ����)
+        bool moving = v > 0.05f;                 // 움직이는지
+        bool running = (_agent != null && _agent.speed >= chaseSpeed - 0.1f); // 달리는지(속도로 판단)
 
         _animator.SetBool("IsWalking", moving);
         _animator.SetBool("IsRunning", moving && running);
@@ -394,11 +396,11 @@ public class EnemyAI : MonoBehaviour
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, alertRange);
 
-        // fovRange (Patrol -> Chase �Ÿ�)
+        // fovRange (Patrol -> Chase 거리)
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, fovRange);
 
-        // FOV ���� ǥ�� (��/�� ��輱)
+        // FOV 시야각 표시 (좌/우 방향선)
         Vector3 origin = transform.position + Vector3.up * 1.0f;
 
         float half = fovAngle * 0.5f;
@@ -408,7 +410,7 @@ public class EnemyAI : MonoBehaviour
         Gizmos.DrawLine(origin, origin + leftDir.normalized * fovRange);
         Gizmos.DrawLine(origin, origin + rightDir.normalized * fovRange);
 
-        // (����) �þ� ��ä���� ���� �׷��ֱ� (����׿�)
+        // (선택) 시야 부채꼴을 호로 그려주기 (디버그용)
         int steps = 24;
         Vector3 prev = origin + leftDir.normalized * fovRange;
         for (int i = 1; i <= steps; i++)

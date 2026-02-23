@@ -18,7 +18,7 @@ public class PlayerMovement : MonoBehaviour
     public float finalSpeed;
     public bool isRunning;
 
-    // ��׿��� ��� ī�޶� ȸ�� ���
+    // 쉬프트가 없을 때 카메라 회전 없음
     public bool toggleCameraRotation;
     public float smoothness = 10f;
 
@@ -45,21 +45,21 @@ public class PlayerMovement : MonoBehaviour
     public StaminaBar _staminaBar;
     private int _baseMaxStamina;
 
-    float staminaTick = 1.0f;      // 1�ʸ��� ȸ��/����
+    float staminaTick = 1.0f;      // 1초마다 회복/소모
     float staminaTimer = 0.0f;
 
     [Header("Weapon Info")]
-    public Transform weaponRoot;// ���� ���� ��ġ
-    public Transform weaponTip; // ���� �� ��ġ
-    public float bladeRadius = 0.12f; // Į �β�
+    public Transform weaponRoot;// 무기 루트 위치
+    public Transform weaponTip; // 무기 끝 위치
+    public float bladeRadius = 0.12f; // 칼 반경
     public LayerMask enemyLayer;
     public int attackDamage = 20;
     private int _baseAttackDamage;
 
-    // ��ų ����߿��� �ٸ� ���� ���ϰ�
+    // 스킬 시전 중에는 다른 행동 안 되게
     public bool isCastingSkill = false;
 
-    [SerializeField] private float hitLockDuration = 0.5f; // Hit ���ϸ��̼� ��� �ð�
+    [SerializeField] private float hitLockDuration = 0.5f; // Hit 애니메이션 잠금 시간
     [SerializeField] private float hitCooldown = 1f;
     private float _hitLockEndTime = 0f;
     private float _nextHitAllowedTime = 0f;
@@ -120,7 +120,7 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // ī�޶� ȸ�� ��� 
+        // 카메라 회전 없음 (Alt키로 토글)
         if (Input.GetKey(KeyCode.LeftAlt))
         {
             toggleCameraRotation = true;
@@ -144,7 +144,7 @@ public class PlayerMovement : MonoBehaviour
 
 
 
-        // �޸���
+        // 달리기
         bool canRun = _currentStamina > 0;
         if ((canRun))
         {
@@ -155,7 +155,7 @@ public class PlayerMovement : MonoBehaviour
             isRunning = false;
         }
 
-        // �κ��丮 â�� ���� �ִ��� ����
+        // 인벤토리 창이 열려 있는지 확인
         bool inventoryOpen = InventorySystem.instance != null && InventorySystem.instance.IsOpen;
 
         if (_attackTimer > 0)
@@ -170,7 +170,7 @@ public class PlayerMovement : MonoBehaviour
             return; 
         }
 
-        // �̵� �Է� �� ���� (WASD/�е� ��)
+        // 이동 입력 값 계산 (WASD/방향키 등)
         float h = Input.GetAxis("Horizontal");
         float v = Input.GetAxis("Vertical");
         MoveInput = new Vector2(h, v);
@@ -186,7 +186,7 @@ public class PlayerMovement : MonoBehaviour
         else if (Input.GetMouseButtonDown(0))
         {
             var currentState = StateMachine.GetState();
-            // ���� ���� �ƴҶ��� ����1�� ��ȯ, ���� ���̸� �޺��� �Ѿ
+            // 공격 중이 아닐때는 공격1로 전환, 공격 중이면 연속기로 넘어감
             if (_currentStamina > 0 &&
                 _attackTimer <= 0 &&
                 !(currentState == Attack1State) &&
@@ -210,7 +210,7 @@ public class PlayerMovement : MonoBehaviour
             {
                 ChangeStamina(-5);
             }
-            // �������� �ʰų� �ȱ��� �� ���¹̳� ȸ��
+            // 달리지 않거나 안 뛰고 있을 때 스태미나 회복
             else if (!isRunning && !isAttacking && !isRolling && _currentStamina < _maxStamina)
             {
                 ChangeStamina(+5);
@@ -243,7 +243,7 @@ public class PlayerMovement : MonoBehaviour
     public void Move(float moveSpeed)
     {
 
-        // ���� ���� ��/�� ����
+        // 전방 기준 좌/우 방향
         Vector3 forward = transform.TransformDirection(Vector3.forward);
         Vector3 right = transform.TransformDirection(Vector3.right);
 
@@ -251,7 +251,7 @@ public class PlayerMovement : MonoBehaviour
 
         if (_characterController.isGrounded && _velocity.y < 0f)
         {
-            _velocity.y = -2f; // �ٴ� ���̱�
+            _velocity.y = -2f; // 바닥 붙이기
         }
 
         _velocity.y += gravity * Time.deltaTime;
@@ -262,10 +262,10 @@ public class PlayerMovement : MonoBehaviour
         _characterController.Move(FinalMove * Time.deltaTime);
 
 
-        // �ִϸ��̼� �Ķ���� ����
+        // 애니메이션 파라미터 계산
         float speedMul = isRunning ? 1.0f : 0.5f;
 
-        // MoveInput.x = �¿�, MoveInput.y = �յ�
+        // MoveInput.x = 좌우, MoveInput.y = 전후
         float animX = MoveInput.x * speedMul;
         float animY = MoveInput.y * speedMul;
 
@@ -281,20 +281,20 @@ public class PlayerMovement : MonoBehaviour
         _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
     }
 
-    // ���� �Է��� �ִ��� ���� (Idle �� Walk/Run ��ȯ�� ���)
+    // 이동 입력이 있는지 확인 (Idle 및 Walk/Run 전환에 사용)
     public bool HasMoveInput()
     {
         return MoveInput.sqrMagnitude > 0.01f;
     }
 
-    // ���� �߿��� �̵� ���ϰ� ����
+    // 공격 중에는 이동 되지 않도록 처리
     public void SetAttacking(bool value)
     {
         isAttacking = value;
 
         if (value)
         {
-            // ���� ������ �� �Է�/�ִ� �� ��� 0����
+            // 공격 시작 시 이동 입력/애니메이션 파라미터 0으로 초기화
             MoveInput = Vector2.zero;
             _animator.SetFloat("MoveX", 0f, 0.1f, Time.deltaTime);
             _animator.SetFloat("MoveY", 0f, 0.1f, Time.deltaTime);
@@ -307,7 +307,7 @@ public class PlayerMovement : MonoBehaviour
         _nextHitAllowedTime = Time.time + hitCooldown;
         _isHitPlaying = true;
 
-        // ���� ���� ���� ����
+        // 공격 중단 및 히트박스 초기화
         _attackActive = false;
         _enemiesHit.Clear();
         SetAttacking(false);
@@ -351,9 +351,9 @@ public class PlayerMovement : MonoBehaviour
     }
     public void AnimEvent_AttackStart()
     {
-        if (_attackActive) return;   // �ߺ� ȣ�� ����
+        if (_attackActive) return;   // 중복 호출 방지
         _attackActive = true;
-        _enemiesHit.Clear();     // ���� ���ݿ��� �ߺ� ��Ʈ ����
+        _enemiesHit.Clear();     // 새로운 공격에서 중복 히트 방지
     }
 
     public void AnimEvent_AttackEnd()
@@ -415,7 +415,7 @@ public class PlayerMovement : MonoBehaviour
                 continue;
             }
 
-            // �̹� ���ݿ��� ó�� �´� ����
+            // 이미 공격한 적: 중복 히트 방지
             if (_enemiesHit.Add(enemy))
             {
                 Debug.Log("Hit Enemy: " + enemy.name);

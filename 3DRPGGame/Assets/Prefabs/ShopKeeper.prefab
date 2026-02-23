@@ -15,7 +15,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2757512536255051747
 Transform:
   m_ObjectHideFlags: 0
@@ -354,15 +354,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 194.19695
+      value: -6.61
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 50.286
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -75.92
+      value: -73.38
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalRotation.w
@@ -370,7 +370,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalRotation.y
@@ -378,7 +378,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -399,6 +399,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_Name
       value: ShopKeeper
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
+      propertyPath: m_TagString
+      value: NPC
       objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: a4e0411a7eafdbe4e83ca51fb3aaf21f, type: 3}
       propertyPath: m_Avatar
@@ -479,3 +483,11 @@ MonoBehaviour:
   exitBtn: {fileID: 0}
   buyPanelUI: {fileID: 0}
   sellPanelUI: {fileID: 0}
+  questBtn: {fileID: 0}
+  dialogueUI: {fileID: 0}
+  questOrder:
+  - {fileID: 11400000, guid: 9df25011e0cefde4e8f5366db9daf112, type: 2}
+  - {fileID: 11400000, guid: 760579f96eec60943844668dc1f2c944, type: 2}
+  - {fileID: 11400000, guid: 81b919cbc7428924a9a7cdff648583a8, type: 2}
+  npcDialogueUI: {fileID: 0}
+  npcDialogueData: {fileID: 11400000, guid: 101e65a34218f9d4faf3d5401b129fbe, type: 2}

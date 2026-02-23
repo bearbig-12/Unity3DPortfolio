@@ -56,20 +56,11 @@ public class SkillNodeUI : MonoBehaviour,
         }
         if (rankText != null)
         {
-            int rank;
-            if (learned)
-            {
-                rank = 1;
-            }
-            else
-            {
-                rank = 0;
-            }
-
+            int rank = learned ? 1 : 0;
             rankText.text = rank + "/" + def.maxRank;
         }
-
     }
+
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (_controller == null) return;
@@ -87,18 +78,28 @@ public class SkillNodeUI : MonoBehaviour,
         if (_controller == null) return;
         _controller.TryLearn(skillId);
     }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         if (!_controller.SkillTree.IsLearned(skillId)) return;
 
-        if (canvas == null) canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) canvas = GetComponentInParent<Canvas>();
         if (canvas == null) return;
 
         _dragIcon = new GameObject("SkillDragIcon");
         _dragIcon.transform.SetParent(canvas.transform, false);
 
         var image = _dragIcon.AddComponent<Image>();
-        if (icon != null) image.sprite = icon.sprite;
+        if (icon != null)
+        {
+            image.sprite = icon.sprite;
+            image.color = Color.white;
+            var rt = _dragIcon.GetComponent<RectTransform>();
+            float w = icon.rectTransform.rect.width;
+            float h = icon.rectTransform.rect.height;
+            rt.sizeDelta = (w > 0 && h > 0) ? new Vector2(w, h) : new Vector2(60f, 60f);
+        }
+        _dragIcon.transform.SetAsLastSibling();
 
         var cg = _dragIcon.AddComponent<CanvasGroup>();
         cg.blocksRaycasts = false;
@@ -108,15 +109,23 @@ public class SkillNodeUI : MonoBehaviour,
         draggedSkill.skillId = skillId;
 
         DragDrop.itemBeingDragged = _dragIcon;
-        _dragIcon.transform.position = eventData.position;
+        MoveDragIcon(eventData);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (_dragIcon != null)
-        {
-            _dragIcon.transform.position = eventData.position;
-        }
+        MoveDragIcon(eventData);
+    }
+
+    private void MoveDragIcon(PointerEventData eventData)
+    {
+        if (_dragIcon == null || canvas == null) return;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            canvas.transform as RectTransform,
+            eventData.position,
+            eventData.pressEventCamera,
+            out Vector2 localPos);
+        _dragIcon.GetComponent<RectTransform>().localPosition = localPos;
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -128,5 +137,4 @@ public class SkillNodeUI : MonoBehaviour,
             Destroy(_dragIcon);
         }
     }
-
 }

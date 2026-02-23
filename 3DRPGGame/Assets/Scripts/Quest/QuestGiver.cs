@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class QuestGiver : MonoBehaviour
 {
-    [SerializeField] private QuestData quest;
+    [SerializeField] private List<QuestData> questOrder = new();
     [SerializeField] private DialogueUI dialogue;
 
     private bool _playerInRange;
@@ -15,9 +16,17 @@ public class QuestGiver : MonoBehaviour
         }
     }
 
-    private void Interact()
+    public void Interact()
     {
-        if (quest == null || dialogue == null || QuestManager.Instance == null) return;
+        if (QuestManager.Instance == null || dialogue == null) return;
+
+        QuestData quest = QuestManager.Instance.GetCurrentQuest(questOrder);
+
+        if (quest == null)
+        {
+            dialogue.Show("Quest", "There are no available quests.");
+            return;
+        }
 
         var status = QuestManager.Instance.GetStatus(quest.questId);
 
@@ -25,7 +34,7 @@ public class QuestGiver : MonoBehaviour
         {
             if (!QuestManager.Instance.CanStartQuest(quest.questId))
             {
-                dialogue.Show("Quest", "아직 할 일이 있어요.");
+                dialogue.Show("Quest", "Please complete the prerequisite quest first.");
                 return;
             }
 
@@ -47,7 +56,7 @@ public class QuestGiver : MonoBehaviour
                 bool turnedIn = QuestManager.Instance.SubmitRequiredItem(quest.questId);
                 dialogue.Show(
                     $"Quest: {quest.title}",
-                    turnedIn ? "잘했어요. 다음 목표를 진행하세요." : "아이템을 가져와주세요."
+                    turnedIn ? "Item submitted. Proceed to the next objective." : "Please bring the required item."
                 );
                 return;
             }
@@ -55,12 +64,12 @@ public class QuestGiver : MonoBehaviour
             if (obj != null && obj.type == QuestObjectiveType.Kill)
             {
                 int c = QuestManager.Instance.GetCount(quest.questId);
-                dialogue.Show($"Quest: {quest.title}", $"진행중: {c}/{obj.requiredCount}");
+                dialogue.Show($"Quest: {quest.title}", $"Progress: {c}/{obj.requiredCount}");
                 return;
             }
         }
 
-        dialogue.Show($"Quest: {quest.title}", "완료된 퀘스트입니다.");
+        dialogue.Show($"Quest: {quest.title}", "This quest has already been completed.");
     }
 
     private void OnTriggerEnter(Collider other)

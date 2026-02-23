@@ -24,6 +24,8 @@ public class DamagePopup : MonoBehaviour, IPoolable
     private void Awake()
     {
         _text = GetComponentInChildren<TextMeshProUGUI>();
+        Debug.Log($"DamagePopup Awake: _text found = {_text != null}");
+
         _canvasGroup = GetComponent<CanvasGroup>();
         if (_canvasGroup == null)
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
@@ -48,10 +50,15 @@ public class DamagePopup : MonoBehaviour, IPoolable
 
     public void Setup(int amount, DamageType type)
     {
-        if (_text == null) return;
+        if (_text == null)
+        {
+            Debug.LogError("DamagePopup: _text is NULL!");
+            return;
+        }
 
         string prefix = type == DamageType.Heal ? "+" : "";
         _text.text = prefix + amount.ToString();
+        Debug.Log($"DamagePopup Setup: {_text.text}");
 
         switch (type)
         {

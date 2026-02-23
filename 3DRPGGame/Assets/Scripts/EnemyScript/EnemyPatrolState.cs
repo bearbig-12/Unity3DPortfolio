@@ -38,7 +38,7 @@ public class EnemyPatrolState : State
             _enemy.StateMachine.ChangeState(_enemy.ChaseState);
             return;
         }
-        // ¿şÀÌÆ÷ÀÎÆ®¿¡ µµÂøÇß´ÂÁö È®ÀÎÇÏ°í ´ÙÀ½ À§Ä¡ ¼³Á¤
+        // ì›¨ì´í¬ì¸íŠ¸ì— ë„ì°©í–ˆëŠ”ì§€ í™•ì¸í•˜ê³  ë‹¤ìŒ ìœ„ì¹˜ ì„¤ì •
         if (!_enemy._agent.pathPending && _enemy._agent.remainingDistance <= _enemy.patrolArrived)
         {
             index = (index + 1) % _enemy.patrolPoints.Length;

@@ -91,6 +91,103 @@ Unity 기반 3D RPG 게임 포트폴리오 프로젝트
 - 새 몬스터 추가 시 코드 수정 불필요
 - 기획자가 직접 수치 조정 가능
 
+### Camera.main 캐싱 최적화
+
+#### 문제점
+
+`Camera.main`은 내부적으로 `FindGameObjectWithTag("MainCamera")`를 호출하여 매번 씬에서 카메라를 검색합니다. Update/LateUpdate에서 매 프레임 호출 시 불필요한 성능 비용이 발생합니다.
+
+#### 적용 파일
+
+| 파일 | 용도 |
+|------|------|
+| `EnemyAI.cs` | 몬스터 HP바 빌보드 |
+| `ShopKepper.cs` | 상호작용 UI 빌보드 |
+| `DamagePopup.cs` | 데미지 팝업 빌보드 (기존 적용됨) |
+
+#### 수정 내용
+
+```csharp
+// 수정 전: 매 프레임 카메라 검색
+void LateUpdate()
+{
+    healthBar.transform.forward = Camera.main.transform.forward;
+}
+
+// 수정 후: 캐싱된 참조 사용
+private Camera _mainCamera;
+
+void Awake()
+{
+    _mainCamera = Camera.main;  // 한 번만 검색
+}
+
+void LateUpdate()
+{
+    healthBar.transform.forward = _mainCamera.transform.forward;
+}
+```
+
+#### 개선 효과
+
+- **FindGameObjectWithTag 호출 제거**: 매 프레임 → 초기화 시 1회
+- **CPU 사용량 감소**: 다수의 몬스터가 있는 씬에서 효과적
+- **일관된 코드 패턴**: 모든 빌보드 UI에서 동일한 캐싱 방식 적용
+
+### HealthBar/ExpBar Update 최적화
+
+#### 문제점
+
+HP바와 경험치바가 값 변화 없이도 매 프레임 `Mathf.Lerp()` 연산을 수행하고 있었습니다.
+
+```csharp
+// 수정 전: 매 프레임 실행 (비효율)
+void Update()
+{
+    _slider.value = Mathf.Lerp(_slider.value, _targetValue, Time.deltaTime * 10f);
+}
+```
+
+#### 적용 파일
+
+| 파일 | 용도 |
+|------|------|
+| `HealthBar.cs` | 플레이어/몬스터 HP바 |
+| `ExpBar.cs` | 플레이어 경험치바 |
+
+#### 수정 내용
+
+```csharp
+// 수정 후: 애니메이션 필요 시에만 실행
+private bool _isAnimating;
+
+void Update()
+{
+    if (!_isAnimating) return;  // 애니메이션 중이 아니면 스킵
+
+    _slider.value = Mathf.Lerp(_slider.value, _targetValue, Time.deltaTime * 10f);
+
+    // 목표값 도달 시 애니메이션 중지
+    if (Mathf.Abs(_slider.value - _targetValue) < 0.01f)
+    {
+        _slider.value = _targetValue;
+        _isAnimating = false;
+    }
+}
+
+public void SetHealth(int health)
+{
+    _targetValue = health;
+    _isAnimating = true;  // 애니메이션 시작
+}
+```
+
+#### 개선 효과
+
+- **불필요한 연산 제거**: 값 변화 없을 때 Update 로직 스킵
+- **다수의 HP바 최적화**: 몬스터가 많은 씬에서 효과적
+- **배터리/발열 감소**: 모바일 환경에서 유리
+
 ## 아키텍처
 
 ```

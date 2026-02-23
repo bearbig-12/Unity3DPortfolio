@@ -103,7 +103,7 @@ public static class FuzzyBossAttack
         {
             return 0f;
         }
-        // �ٻ簪 ó��
+        // 꼭짓값 처리
         if (Mathf.Approximately(x, b))
         {
             return 1f;

@@ -25,7 +25,7 @@ public class PlayerAttack2State : State
 
 
         _player._animator.SetTrigger("Attack02");
-        // ±¸¸£´Â µ¿¾È ÀÌµ¿  ÆÄ¶ó¹ÌÅÍ¸¦ 0À¸·Î Àá±ÅÁØ´Ù
+        // ê³µê²© ì‹œìž‘ ì‹œ ì´ë™ íŒŒë¼ë¯¸í„°ë¥¼ 0ìœ¼ë¡œ ì´ˆê¸°í™”
         _player._animator.SetFloat("MoveX", 0f);
         _player._animator.SetFloat("MoveY", 0f);
     }
@@ -35,8 +35,8 @@ public class PlayerAttack2State : State
         AnimatorStateInfo info = _player._animator.GetCurrentAnimatorStateInfo(0);
         if (info.IsName("Melee_Attack02"))
         {
-            float normalizedTime = info.normalizedTime % 1; // Loop ¹æÁö
-            // ÄÞº¸ ÀÔ·Â Çã¿ë ±¸°£ Ã¼Å©
+            float normalizedTime = info.normalizedTime % 1; // Loop ë°©ì§€
+            // ì—°ì† ìž…ë ¥ ê°€ëŠ¥ êµ¬ê°„ ì²´í¬
             if (normalizedTime >= comboStart && normalizedTime <= comboEnd)
             {
                 if (Input.GetMouseButtonDown(0))
@@ -55,7 +55,7 @@ public class PlayerAttack2State : State
             }
             else
             {
-                // °ø°Ý ³¡³ª¸é ´ë±â »óÅÂ·Î º¹±Í
+                // ë‹¤ìŒ ìž…ë ¥ì´ ì—†ì„ ê²½ìš° ê¸°ë³¸ ìƒíƒœë¡œ ì „í™˜
                 if (_player.HasMoveInput())
                 {
                     if (_player.isRunning)

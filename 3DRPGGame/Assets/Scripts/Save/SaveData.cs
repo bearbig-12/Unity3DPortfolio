@@ -16,6 +16,9 @@ public class SaveData
     // 몬스터 상태 저장
     public List<MonsterSaveData> monsterStates = new List<MonsterSaveData>();
 
+    // 퀘스트 상태 저장
+    public List<QuestSaveData> questStates = new List<QuestSaveData>();
+
     // 플레이어 위치 저장
     public float playerPosX, playerPosY, playerPosZ;
     public string lastSavePointId;

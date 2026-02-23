@@ -82,6 +82,12 @@ public class SaveManager : MonoBehaviour
             data.monsterStates = MonsterSpawnManager.Instance.GetAllSaveData();
         }
 
+        // 퀘스트 상태 저장
+        if (QuestManager.Instance != null)
+        {
+            data.questStates = QuestManager.Instance.GetSaveData();
+        }
+
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(SavePath, json);
 
@@ -169,6 +175,12 @@ public class SaveManager : MonoBehaviour
             MonsterSpawnManager.Instance.ApplyLoadedData(data.monsterStates);
         }
 
+        // 퀘스트 상태 복원
+        if (QuestManager.Instance != null && data.questStates != null)
+        {
+            QuestManager.Instance.ApplyLoadedData(data.questStates);
+        }
+
         if (enablePerformanceLog)
         {
             sw.Stop();
@@ -182,13 +194,13 @@ public class SaveManager : MonoBehaviour
         UnityEngine.Debug.Log("Loaded save.");
     }
 
-    // ���� �����ӿ� ������ ���� �� �ε尡 �Ͼ�� �κ��丮�� �ƹ��͵� �ȶ߰Եȴ�.
+    // 같은 프레임에 인벤토리 초기화와 로드가 동시에 일어나면 아무것도 안 채워진다.
     private IEnumerator LoadInventoryAfterClear(SaveData data)
     {
-        //���� �������� ���� �����Ѵ�
+        // 먼저 인벤토리를 초기화한다
         inventory.ClearInventory();
         yield return null;
-        // ���� �� ���Կ� ����� ������ ����
+        // 초기화 후 저장된 아이템을 로드
         inventory.LoadFromSavedStacks(data.inventoryStacks);
     }
 }
