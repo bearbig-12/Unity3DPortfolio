@@ -2,47 +2,408 @@
 
 Unity 기반 3D RPG 게임 포트폴리오 프로젝트
 
-## 주요 시스템
+> **개발 기간**: 2024
+> **엔진**: Unity 2022.3 LTS
+> **언어**: C#
 
-- **State Pattern 기반 캐릭터 시스템**: 플레이어/적 AI 상태 관리
-- **퍼지 로직 보스 AI**: 상황 기반 지능형 공격 선택
-- **콤보 공격 시스템**: 프레임 타이밍 기반 입력 처리
-- **인벤토리 시스템**: 드래그 앤 드롭, 아이템 스태킹
-- **퀘스트 시스템**: 다중 목표, 선행 퀘스트 조건
-- **스킬트리 시스템**: 계층적 스킬 잠금 해제
-- **상점 시스템**: 구매/판매 인터페이스
-- **세이브/로드 시스템**: JSON 기반 게임 상태 저장
+---
 
-## 기술 스택
+## 목차
 
-- Unity 2022.3 LTS
-- C#
-- NavMesh (AI 경로 탐색)
-- JSON 직렬화
+1. [프로젝트 개요](#1-프로젝트-개요)
+2. [구현 시스템](#2-구현-시스템)
+   - [State Machine 기반 캐릭터 시스템](#21-state-machine-기반-캐릭터-시스템)
+   - [Fuzzy Logic 적 AI](#22-fuzzy-logic-적-ai)
+   - [퀘스트 시스템](#23-퀘스트-시스템)
+   - [인벤토리 & 드래그앤드롭](#24-인벤토리--드래그앤드롭)
+   - [스킬 트리 시스템](#25-스킬-트리-시스템)
+   - [상점 시스템](#26-상점-시스템)
+   - [오브젝트 풀링](#27-오브젝트-풀링)
+   - [Save / Load 시스템](#28-save--load-시스템)
+   - [데미지 팝업 시스템](#29-데미지-팝업-시스템)
+   - [미니맵 시스템](#210-미니맵-시스템)
+   - [카메라 락온 시스템](#211-카메라-락온-시스템)
+3. [사용된 디자인 패턴](#3-사용된-디자인-패턴)
+4. [성능 최적화](#4-성능-최적화)
+5. [면접 대비 Q&A](#5-면접-대비-qa)
+6. [프로젝트 구조](#6-프로젝트-구조)
+7. [버그 수정 기록](#7-버그-수정-기록)
 
-## 성능 테스트 결과
+---
 
-### Object Pooling 시스템
+## 1. 프로젝트 개요
 
-#### 오브젝트 풀링이란?
+### 핵심 구현 목표
 
-게임에서 오브젝트(총알, 이펙트, 적 등)를 자주 생성/파괴하면 다음 문제가 발생합니다:
+- 유지보수 가능한 **아키텍처** 설계 (State Pattern, 컴포넌트 분리)
+- **GC 부담 최소화**를 위한 오브젝트 풀링 적용
+- **데이터 주도 설계** (ScriptableObject, JSON) 로 기획 변경에 유연하게 대응
+- 실무에서 사용되는 **디자인 패턴** 직접 구현 및 적용
 
-1. **Instantiate/Destroy 비용**: 매번 메모리 할당/해제 발생
-2. **GC(가비지 컬렉션) 스파이크**: 파괴된 객체 정리 시 프레임 드랍
-3. **메모리 파편화**: 반복적인 할당/해제로 메모리 비효율
+### 주요 시스템 요약
 
-**오브젝트 풀링**은 미리 오브젝트를 생성해두고 **재사용**하는 방식입니다:
+| 시스템 | 핵심 기술 | 관련 파일 |
+|--------|-----------|-----------|
+| 캐릭터 제어 | State Machine | `StateMachine.cs`, `Player/*State.cs` |
+| 적 AI | FSM + Fuzzy Logic | `EnemyAI.cs`, `BossAI.cs`, `FuzzyAttack.cs` |
+| 퀘스트 | 다중 목표, 선행 조건 | `QuestManager.cs`, `QuestGiver.cs` |
+| 인벤토리 | 드래그앤드롭, 스태킹 | `InventorySystem.cs`, `DragDrop.cs` |
+| 스킬 트리 | 계층 잠금 해제, JSON | `SkillTreeSystem.cs`, `SkillDatabase.cs` |
+| 상점 | 구매/판매 인터페이스 | `ShopKepper.cs`, `GoldManager.cs` |
+| 오브젝트 풀링 | Queue 기반 재사용 | `ObjectPoolManager.cs` |
+| Save/Load | JSON 직렬화 | `SaveManager.cs`, `SaveData.cs` |
+| 데미지 팝업 | 풀링 + 애니메이션 | `DamagePopupManager.cs`, `DamagePopup.cs` |
+| 미니맵 | Orthographic Camera, 마커 | `MinimapManager.cs` |
+| 카메라 | 락온, 3인칭 | `CameraMovement.cs` |
+
+---
+
+## 2. 구현 시스템
+
+---
+
+### 2.1 State Machine 기반 캐릭터 시스템
+
+#### 설계 배경
+
+`if/else` 분기로 상태를 관리하면 상태가 늘어날수록 코드가 복잡해지고 버그가 생기기 쉽습니다.
+State Pattern을 적용해 각 상태를 독립 클래스로 분리하여 **단일 책임 원칙(SRP)** 을 지켰습니다.
+
+#### 구조
 
 ```
-[풀링 없음]
-발사 → Instantiate() → 충돌 → Destroy() → GC 부담
+StateMachine
+├── Enter()   : 상태 진입 시 1회 실행
+├── Execute() : 매 프레임 실행 (Update)
+└── Exit()    : 상태 종료 시 1회 실행
 
-[풀링 사용]
-발사 → Pool.Get() → 충돌 → Pool.Return() → 재사용 대기
+플레이어 상태 목록
+├── PlayerIdleState     - 대기
+├── PlayerWalkState     - 걷기
+├── PlayerRunState      - 달리기
+├── PlayerRollState     - 구르기 (무적 판정)
+├── PlayerAttack1State  - 1타
+├── PlayerAttack2State  - 2타
+└── PlayerAttack3State  - 3타 (피니셔)
 ```
 
-#### 테스트 결과 (FireBall 100개 기준)
+#### 핵심 코드
+
+```csharp
+// StateMachine.cs
+public class StateMachine
+{
+    private State _currentState;
+
+    public void ChangeState(State next)
+    {
+        if (_currentState == next) return;  // 동일 상태 전환 방지
+        _currentState?.Exit();
+        _currentState = next;
+        _currentState.Enter();
+    }
+
+    public void Update() => _currentState?.Execute();
+}
+```
+
+#### 콤보 공격 구현
+
+공격 상태 내에 **입력 수용 구간(Input Buffer Window)** 을 두어 프레임 타이밍 기반 콤보를 구현했습니다.
+
+```csharp
+// PlayerAttack1State.cs - 콤보 입력 수용 구간
+private void CheckComboInput()
+{
+    if (!_comboInputWindow) return;          // 수용 구간이 아니면 무시
+    if (Input.GetMouseButtonDown(0))
+        _player.StateMachine.ChangeState(_player.Attack2State);
+}
+```
+
+#### 면접 포인트
+
+> Q: State Pattern 대신 Animator로 상태를 관리할 수도 있는데 왜 코드로 구현했나요?
+> A: Animator는 애니메이션 전환에 특화되어 있고, 게임 로직(데미지 판정 타이밍, 콤보 조건, 무적 프레임 등)은 코드에서 직접 제어하는 것이 더 명확합니다. 두 방식을 혼용해 Animator는 애니메이션만, StateMachine은 로직만 담당하도록 분리했습니다.
+
+---
+
+### 2.2 Fuzzy Logic 적 AI
+
+#### 설계 배경
+
+일반 적은 FSM(유한 상태 기계)으로 구현하고, **보스 AI**에는 퍼지 로직을 적용했습니다.
+단순한 조건문(HP < 30%이면 강공격)보다 **연속적이고 자연스러운 의사결정**이 가능합니다.
+
+#### 일반 적 AI - FSM
+
+```
+EnemyAI 상태 전이
+Idle → (플레이어 FOV 감지) → Chase → (공격 사거리) → Attack
+              ↓ (추적 실패)
+           Return → Patrol → Idle
+```
+
+- FOV(시야각) + 거리 조건으로 플레이어 감지
+- NavMesh Agent로 경로 탐색
+- 웨이포인트 순환 패트롤
+
+#### 보스 AI - Fuzzy Logic
+
+| 입력 변수 | 설명 |
+|-----------|------|
+| HP 비율 | 보스/플레이어 각각의 현재 HP |
+| 거리 | 플레이어와의 현재 거리 |
+
+```csharp
+// FuzzyAttack.cs - 퍼지 멤버십 함수
+float heavyScore = 0f;
+float basicScore = 0f;
+
+// 보스 HP 낮을수록 강공격 점수 상승
+heavyScore += FuzzyLow(bossHpRatio);
+
+// 플레이어 HP 높을수록 강공격 점수 상승
+heavyScore += FuzzyHigh(playerHpRatio);
+
+// 두 점수를 비교해 공격 방식 결정
+return heavyScore >= basicScore ? AttackType.Heavy : AttackType.Basic;
+```
+
+#### 면접 포인트
+
+> Q: 퍼지 로직을 AI에 적용한 이유가 무엇인가요?
+> A: 일반 조건문은 경계값에서 동작이 급격히 바뀌어 패턴이 예측 가능해집니다. 퍼지 로직은 HP 30% 이하에서도 확률적으로 강공격/약공격을 혼용해 플레이어가 패턴을 쉽게 파악하기 어렵도록 했습니다. 또한 여러 변수(HP, 거리)를 동시에 고려해 상황에 맞는 복합적인 판단이 가능합니다.
+
+---
+
+### 2.3 퀘스트 시스템
+
+#### 기능
+
+- **다중 목표 타입**: Kill(처치), RequiredItem(아이템 제출), Arrive(도착)
+- **선행 퀘스트 조건**: `prerequisiteQuestId`로 특정 퀘스트 완료 후 해금
+- **퀘스트 순서 관리**: NPC별로 퀘스트 목록을 순서대로 제공
+- **상태 기계**: Available → InProgress → Completed
+
+#### 구조
+
+```
+QuestData (ScriptableObject)
+└── questId, title, description
+└── objectives[] (목표 목록)
+    ├── type: Kill / RequiredItem / Arrive
+    ├── targetId, requiredCount
+    └── currentCount
+
+QuestManager (Singleton)
+├── StartQuest()        - 퀘스트 시작
+├── UpdateKillCount()   - 처치 수 갱신
+├── SubmitRequiredItem()- 아이템 제출
+├── CanStartQuest()     - 선행 조건 확인
+└── GetCurrentQuest()   - 현재 진행 가능 퀘스트 반환
+
+QuestGiver (NPC)
+└── E키 상호작용 → QuestManager에 위임
+```
+
+#### 데이터 흐름
+
+```
+플레이어 E키 → QuestGiver.Interact()
+    → QuestManager.GetCurrentQuest()
+    → QuestStatus 확인 (Available / InProgress / Completed)
+    → DialogueUI.Show() 로 결과 표시
+
+몬스터 처치 → EnemyAI.OnDie()
+    → QuestManager.UpdateKillCount(monsterId)
+    → 퀘스트 목표 달성 여부 체크
+```
+
+#### 면접 포인트
+
+> Q: 퀘스트 데이터를 ScriptableObject로 관리한 이유는?
+> A: 퀘스트 내용(제목, 설명, 목표 수치)은 정적 데이터이므로 ScriptableObject로 에디터에서 설정합니다. 런타임에 변하는 진행 상태(currentCount, status)만 별도로 관리해 데이터와 상태를 분리했습니다. 기획자가 코드 없이 에디터에서 퀘스트를 추가/수정할 수 있습니다.
+
+---
+
+### 2.4 인벤토리 & 드래그앤드롭
+
+#### 기능
+
+- 아이템 획득/스태킹/소비
+- 드래그앤드롭으로 퀵슬롯에 스킬/아이템 등록
+- 우클릭 컨텍스트 메뉴 (장착, 버리기, 사용)
+- PickableItem - 씬에서 아이템 습득
+
+#### 드래그앤드롭 구조
+
+Unity EventSystem 인터페이스를 구현해 드래그를 처리합니다.
+
+```csharp
+// IBeginDragHandler - 드래그 시작
+// IDragHandler     - 드래그 중 (위치 갱신)
+// IEndDragHandler  - 드래그 종료 (드롭 처리)
+// IDropHandler     - 드롭 대상에서 수신
+
+// 드래그 아이콘 위치 계산 (Overlay / Camera 모드 모두 대응)
+RectTransformUtility.ScreenPointToLocalPointInRectangle(
+    canvas.transform as RectTransform,
+    eventData.position,
+    eventData.pressEventCamera,
+    out Vector2 localPos);
+```
+
+`CanvasGroup.blocksRaycasts = false` 설정으로 드래그 아이콘이 드롭 슬롯의 Raycast를 막지 않도록 처리했습니다.
+
+#### 퀵슬롯 연동
+
+```
+스킬 아이콘 드래그 → CurrentDragSkill 컴포넌트에 skillId 태그
+    → 퀵슬롯 드롭 → QuickSlot.OnDrop()
+    → skillId 저장 → 단축키(1~4) 로 PlayerSkillCaster.TryUseSkill() 호출
+```
+
+---
+
+### 2.5 스킬 트리 시스템
+
+#### 기능
+
+- JSON 파일 기반 스킬 데이터 정의
+- 계층적 선행 스킬 조건 (parentId)
+- 레벨 / 스킬 포인트 / 선행 스킬 3단계 해금 조건
+- 스킬 랭크 시스템 (maxRank까지 반복 습득)
+- 드래그앤드롭으로 퀵슬롯에 스킬 등록
+- 마우스 호버 툴팁
+
+#### 데이터 구조
+
+```json
+// Resources/SkillTree/skills.json
+{
+  "skills": [
+    {
+      "id": "energy_ball",
+      "name": "Energy Ball",
+      "parentId": "",
+      "unlockLevel": 1,
+      "cost": 1,
+      "maxRank": 1,
+      "cooldown": 3.0,
+      "damage": 30,
+      "description": "Launches a magic projectile."
+    },
+    {
+      "id": "advanced_energy_ball",
+      "name": "Advanced Energy Ball",
+      "parentId": "energy_ball",
+      "unlockLevel": 5,
+      "cost": 2,
+      "maxRank": 1,
+      "cooldown": 2.0,
+      "damage": 60
+    }
+  ]
+}
+```
+
+#### 습득 조건 체크 로직
+
+```csharp
+// SkillTreeSystem.cs
+public bool CanLearn(string id)
+{
+    // 1. 레벨 조건
+    if (progress.Level < skill.unlockLevel) return false;
+
+    // 2. 스킬 포인트 조건
+    if (progress.SkillPoints < skill.cost) return false;
+
+    // 3. 선행 스킬 조건
+    if (!string.IsNullOrEmpty(skill.parentId))
+        if (!_learned.ContainsKey(skill.parentId)) return false;
+
+    // 4. 최대 랭크 초과 여부
+    if (_learned.TryGetValue(id, out var state))
+        return state.rank < skill.maxRank;
+
+    return true;
+}
+```
+
+#### 시스템 연결 구조
+
+```
+skills.json → SkillDatabase (딕셔너리 캐싱)
+                    ↓ Get(id)
+SkillTreeSystem ← CanLearn / Learn / IsLearned
+                    ↓
+SkillUIController → K키로 패널 토글, 노드 일괄 갱신
+                    ↓
+SkillNodeUI → 색상(잠김/가능/완료), 클릭, 드래그, 툴팁
+                    ↓
+PlayerSkillCaster → 실제 스킬 발동 (쿨다운, 이펙트, 애니메이션)
+```
+
+#### 면접 포인트
+
+> Q: 스킬 데이터를 ScriptableObject가 아닌 JSON으로 관리한 이유는?
+> A: 스킬 트리처럼 계층 구조와 참조(parentId)가 있는 데이터는 JSON이 더 직관적입니다. 또한 JSON은 외부 편집이 용이하고 향후 서버에서 스킬 데이터를 내려받는 구조로 확장하기 쉽습니다.
+
+---
+
+### 2.6 상점 시스템
+
+#### 기능
+
+- 구매: 인벤토리 아이템 DB 기반 아이템 목록 표시
+- 판매: 현재 인벤토리 아이템 목록 표시, 선택 판매
+- GoldManager로 골드 통합 관리
+- E키 상호작용 범위 진입 시 활성화
+
+---
+
+### 2.7 오브젝트 풀링
+
+#### 설계 배경
+
+파이어볼, 폭발 이펙트, 데미지 팝업처럼 자주 생성/파괴되는 오브젝트를 반복적으로 Instantiate/Destroy하면 GC 스파이크로 프레임 드랍이 발생합니다.
+
+#### 구조
+
+```
+ObjectPoolManager (Singleton, DontDestroyOnLoad)
+├── Dictionary<string, Queue<GameObject>> _pools
+│                           ↑ 키 → 대기 중인 오브젝트 큐
+├── Get(key)    : 큐에서 꺼내 활성화, 비었으면 자동 확장
+├── Return(key) : 비활성화 후 큐에 반환
+└── RegisterPrefab() : 런타임 풀 등록 (미니맵 마커 등)
+```
+
+#### IPoolable 인터페이스
+
+풀에서 꺼낼 때/반환할 때 초기화가 필요한 컴포넌트는 `IPoolable`을 구현합니다.
+
+```csharp
+public interface IPoolable
+{
+    void OnSpawn();    // Get() 시 호출 - 초기화
+    void OnDespawn();  // Return() 시 호출 - 정리
+}
+```
+
+#### 적용 대상
+
+| 오브젝트 | 풀 키 | 용도 |
+|----------|-------|------|
+| FireBall | `"fireball"` | 플레이어/보스 발사체 |
+| ExplosionVFX | `"explosion"` | 폭발 이펙트 |
+| DamagePopup | `"damagePopup"` | 데미지 숫자 UI |
+| EnemyMarker | `"minimap_enemy"` | 미니맵 적 마커 |
+| NPCMarker | `"minimap_npc"` | 미니맵 NPC 마커 |
+
+#### 성능 측정 결과 (FireBall 100발 기준)
 
 | 항목 | 풀링 OFF | 풀링 ON | 개선 |
 |------|----------|---------|------|
@@ -50,226 +411,387 @@ Unity 기반 3D RPG 게임 포트폴리오 프로젝트
 | Destroy 호출 | 100 | **0** | -100% |
 | 메모리 사용량 | 19,904 KB | **8,424 KB** | **-57%** |
 
-#### 풀링 사용 효과
+#### 면접 포인트
 
-- **메모리 절약**: 약 11.5MB 감소 (57%)
-- **GC 스파이크 제거**: Instantiate/Destroy 0회
-- **프레임 안정성**: 대량 오브젝트 발사 시에도 프레임 드랍 없음
-- **확장성**: 보스전, 탄막 패턴 등 대량 오브젝트 처리에 적합
+> Q: 풀이 비었을 때 처리 방법은?
+> A: `Get()`에서 큐가 비어 있으면 새 오브젝트를 동적으로 생성해 반환합니다(자동 확장). 이렇게 하면 initialSize를 정확하게 예측하지 않아도 되고, 최악의 경우에도 동작이 보장됩니다.
 
-#### 적용 대상
+---
 
-- FireBall (플레이어/보스 발사체)
-- ExplosionVFX (폭발 이펙트)
-- DamagePopup (데미지 숫자 UI)
+### 2.8 Save / Load 시스템
 
-### Save/Load 시스템 (JSON)
+#### 저장 대상
 
-| 몬스터 수 | Save 시간 | Save 메모리 | Load 시간 | Load 메모리 |
-|-----------|-----------|-------------|-----------|-------------|
-| 3마리 | 2ms | 24KB | 2ms | 12KB |
-| 8마리 | <1ms | 20KB | <1ms | 32KB |
-| 50마리 | 1ms | 60KB | 1ms | 112KB |
-| 100마리 | <1ms | 104KB | <1ms | 212KB |
-
-- **100개 오브젝트 기준 Save/Load 1ms 미만**
-- **메모리 사용량: 약 1~2KB/오브젝트**
-- 프레임 드랍 없이 실시간 저장 가능
-
-### ScriptableObject + JSON 최적화
-
-정적 데이터(몬스터 스탯)는 ScriptableObject로, 동적 데이터(현재 HP, 위치)만 JSON으로 저장하는 방식 적용
-
-| 방식 | Save 메모리 | Load 메모리 | 개선율 |
-|------|-------------|-------------|--------|
-| Pure JSON | 104KB | 212KB | - |
-| SO + JSON | 96KB | 196KB | **8% 감소** |
-
-**SO + JSON 방식의 장점:**
-- 메모리 사용량 감소 (정적 데이터 공유)
-- 에디터에서 몬스터 밸런싱 용이
-- 새 몬스터 추가 시 코드 수정 불필요
-- 기획자가 직접 수치 조정 가능
-
-### Camera.main 캐싱 최적화
-
-#### 문제점
-
-`Camera.main`은 내부적으로 `FindGameObjectWithTag("MainCamera")`를 호출하여 매번 씬에서 카메라를 검색합니다. Update/LateUpdate에서 매 프레임 호출 시 불필요한 성능 비용이 발생합니다.
-
-#### 적용 파일
-
-| 파일 | 용도 |
-|------|------|
-| `EnemyAI.cs` | 몬스터 HP바 빌보드 |
-| `ShopKepper.cs` | 상호작용 UI 빌보드 |
-| `DamagePopup.cs` | 데미지 팝업 빌보드 (기존 적용됨) |
-
-#### 수정 내용
-
-```csharp
-// 수정 전: 매 프레임 카메라 검색
-void LateUpdate()
-{
-    healthBar.transform.forward = Camera.main.transform.forward;
-}
-
-// 수정 후: 캐싱된 참조 사용
-private Camera _mainCamera;
-
-void Awake()
-{
-    _mainCamera = Camera.main;  // 한 번만 검색
-}
-
-void LateUpdate()
-{
-    healthBar.transform.forward = _mainCamera.transform.forward;
-}
+```
+SaveData
+├── playerData       - 위치, HP, 레벨, 경험치, 스킬포인트, 골드
+├── inventoryItems   - 아이템 ID + 수량 목록
+├── learnedSkills    - 스킬 ID + 랭크 목록
+├── questSaveData    - 퀘스트 상태 + 목표 진행도
+└── monsterStates    - 몬스터별 생사 여부 + 현재 HP
 ```
 
-#### 개선 효과
+#### ScriptableObject + JSON 분리 전략
 
-- **FindGameObjectWithTag 호출 제거**: 매 프레임 → 초기화 시 1회
-- **CPU 사용량 감소**: 다수의 몬스터가 있는 씬에서 효과적
-- **일관된 코드 패턴**: 모든 빌보드 UI에서 동일한 캐싱 방식 적용
+```
+정적 데이터 (변하지 않음) → ScriptableObject
+  MonsterDefinition: 이름, 최대 HP, 공격력, 이동속도 등
 
-### HealthBar/ExpBar Update 최적화
-
-#### 문제점
-
-HP바와 경험치바가 값 변화 없이도 매 프레임 `Mathf.Lerp()` 연산을 수행하고 있었습니다.
-
-```csharp
-// 수정 전: 매 프레임 실행 (비효율)
-void Update()
-{
-    _slider.value = Mathf.Lerp(_slider.value, _targetValue, Time.deltaTime * 10f);
-}
+동적 데이터 (런타임에 변함) → JSON 저장
+  MonsterSaveData: 현재 HP, 사망 여부, 위치
 ```
 
-#### 적용 파일
+| 방식 | Save 메모리 | Load 메모리 |
+|------|-------------|-------------|
+| 전부 JSON | 104 KB | 212 KB |
+| SO + JSON | **96 KB** | **196 KB** |
 
-| 파일 | 용도 |
-|------|------|
-| `HealthBar.cs` | 플레이어/몬스터 HP바 |
-| `ExpBar.cs` | 플레이어 경험치바 |
+#### 세이브 포인트
 
-#### 수정 내용
+씬에 배치된 `SavePointTrigger`에 진입 시 자동 저장. `SaveManager.Save()` → JSON → `Application.persistentDataPath`.
+
+#### 면접 포인트
+
+> Q: JSON 저장 시 보안 처리는?
+> A: 이 프로젝트는 싱글 플레이어 오프라인이므로 별도 암호화는 적용하지 않았습니다. 온라인 게임이라면 서버에서 검증하거나, 로컬 저장 시 AES 암호화 또는 해시 체크섬을 추가하는 방법을 사용할 것입니다.
+
+---
+
+### 2.9 데미지 팝업 시스템
+
+#### 기능
+
+- 일반 데미지 / 치명타 / 힐 타입별 색상 구분
+- 오브젝트 풀링으로 팝업 재사용
+- 위로 떠오르는 애니메이션 + 페이드 아웃
+- 카메라를 향하는 빌보드 처리
+
+#### 타입별 색상
+
+| 타입 | 색상 | 크기 |
+|------|------|------|
+| Normal | 흰색 | 기본 |
+| Critical | 빨간색 | 1.5배 |
+| Heal | 초록색 | 기본 |
+
+#### 사용법
 
 ```csharp
-// 수정 후: 애니메이션 필요 시에만 실행
-private bool _isAnimating;
+// 데미지 팝업 표시
+DamagePopupManager.Instance.Show(
+    position: transform.position,
+    amount: 150,
+    type: DamageType.Critical
+);
+```
 
-void Update()
+---
+
+### 2.10 미니맵 시스템
+
+#### 구조
+
+```
+MinimapManager (Singleton)
+├── MinimapCamera (Orthographic, 위에서 아래 촬영)
+│     └── RenderTexture → UI RawImage에 표시
+├── PlayerMarker  - 플레이어 위치 + 방향 표시
+├── EnemyMarkers  - 적 위치 (사망 시 자동 제거)
+└── NPCMarkers    - NPC 위치 (정적)
+```
+
+#### 마커 풀링
+
+적 마커는 적이 많은 씬에서 잦은 생성/제거가 발생하므로 ObjectPoolManager와 연동합니다.
+
+```csharp
+// 적 사망 시 마커 반환
+ObjectPoolManager.Instance.Return("minimap_enemy", marker);
+
+// 새 적 등록 시 마커 꺼내기
+ObjectPoolManager.Instance.Get("minimap_enemy");
+```
+
+#### 성능 최적화
+
+- 적 스캔은 매 프레임이 아닌 **1.5초 간격**으로 제한 (`FindObjectsOfType` 비용 절감)
+- NPC 마커는 정적이므로 **초기화 시 1회**만 등록
+
+#### M키 줌 3단계 순환
+
+```
+minZoom(15) → defaultZoom(30) → maxZoom(60) → minZoom ...
+```
+
+---
+
+### 2.11 카메라 락온 시스템
+
+#### 기능
+
+- TAB키로 가장 가까운 적 락온/해제
+- 락온 중 카메라가 적을 중심으로 회전
+- 적 사망 시 자동으로 락온 해제
+- 락온 해제 시 기본 3인칭 카메라로 복귀
+
+#### 구현
+
+```csharp
+// 가장 가까운 적 탐색
+private Transform FindNearestEnemy()
 {
-    if (!_isAnimating) return;  // 애니메이션 중이 아니면 스킵
+    EnemyAI[] enemies = FindObjectsOfType<EnemyAI>();
+    Transform nearest = null;
+    float minDist = float.MaxValue;
 
-    _slider.value = Mathf.Lerp(_slider.value, _targetValue, Time.deltaTime * 10f);
-
-    // 목표값 도달 시 애니메이션 중지
-    if (Mathf.Abs(_slider.value - _targetValue) < 0.01f)
+    foreach (var enemy in enemies)
     {
-        _slider.value = _targetValue;
-        _isAnimating = false;
+        if (enemy.isDead) continue;
+        float dist = Vector3.Distance(transform.position, enemy.transform.position);
+        if (dist < minDist) { minDist = dist; nearest = enemy.transform; }
     }
-}
-
-public void SetHealth(int health)
-{
-    _targetValue = health;
-    _isAnimating = true;  // 애니메이션 시작
+    return nearest;
 }
 ```
 
-#### 개선 효과
+---
 
-- **불필요한 연산 제거**: 값 변화 없을 때 Update 로직 스킵
-- **다수의 HP바 최적화**: 몬스터가 많은 씬에서 효과적
-- **배터리/발열 감소**: 모바일 환경에서 유리
+## 3. 사용된 디자인 패턴
 
-## 아키텍처
+| 패턴 | 적용 위치 | 목적 |
+|------|-----------|------|
+| **State Pattern** | PlayerMovement, EnemyAI, BossAI | 상태별 로직 분리, 전환 명확화 |
+| **Singleton Pattern** | QuestManager, ObjectPoolManager, DamagePopupManager, MinimapManager | 전역 접근이 필요한 매니저 클래스 |
+| **Observer Pattern** | 퀘스트 목표 갱신, 스킬 UI 갱신 | 느슨한 결합으로 변경 전파 |
+| **Strategy Pattern** | FuzzyAttack, FuzzyBossAttack | 공격 방식 선택 로직 교체 가능 |
+| **Object Pool Pattern** | ObjectPoolManager | GC 부담 감소, 오브젝트 재사용 |
+| **Data-Driven Design** | MonsterDefinition(SO), SkillDatabase(JSON) | 코드 수정 없이 데이터 변경 |
+| **Dependency Injection** | SkillNodeUI.SetController() | Inspector 할당 없이 참조 주입 |
+
+---
+
+## 4. 성능 최적화
+
+### 4.1 Camera.main 캐싱
+
+`Camera.main`은 내부적으로 `FindGameObjectWithTag("MainCamera")`를 매번 호출합니다.
+
+```csharp
+// Before: 매 프레임 탐색
+void LateUpdate() => healthBar.transform.forward = Camera.main.transform.forward;
+
+// After: Awake에서 1회 캐싱
+private Camera _mainCamera;
+void Awake() => _mainCamera = Camera.main;
+void LateUpdate() => healthBar.transform.forward = _mainCamera.transform.forward;
+```
+
+적용 파일: `EnemyAI.cs`, `ShopKepper.cs`, `DamagePopup.cs`
+
+### 4.2 HP바/경험치바 Update 최적화
+
+```csharp
+// Before: 값 변화 없어도 매 프레임 Lerp 연산
+void Update() => _slider.value = Mathf.Lerp(_slider.value, _target, Time.deltaTime * 10f);
+
+// After: 애니메이션 중일 때만 실행
+private bool _isAnimating;
+void Update()
+{
+    if (!_isAnimating) return;
+    _slider.value = Mathf.Lerp(_slider.value, _target, Time.deltaTime * 10f);
+    if (Mathf.Abs(_slider.value - _target) < 0.01f) { _slider.value = _target; _isAnimating = false; }
+}
+```
+
+적용 파일: `HealthBar.cs`, `ExpBar.cs`
+
+### 4.3 미니맵 스캔 주기 제한
+
+`FindObjectsOfType<EnemyAI>()`는 씬 전체를 탐색하는 비용이 큰 함수입니다.
+
+```csharp
+private float _enemyScanTimer;
+private const float EnemyScanInterval = 1.5f; // 1.5초마다 1회 스캔
+
+void Update()
+{
+    _enemyScanTimer += Time.deltaTime;
+    if (_enemyScanTimer < EnemyScanInterval) return;
+    _enemyScanTimer = 0f;
+    // FindObjectsOfType 실행
+}
+```
+
+### 4.4 오브젝트 풀링
+
+파이어볼 100발 기준 메모리 57% 절감, GC 스파이크 제거.
+→ [2.7 오브젝트 풀링](#27-오브젝트-풀링) 참고
+
+### 4.5 ScriptableObject + JSON 분리
+
+정적 데이터는 SO로 공유, 동적 상태만 JSON 저장.
+→ 메모리 8% 절감, 에디터에서 밸런싱 용이
+
+---
+
+## 5. 면접 대비 Q&A
+
+### State Pattern
+
+**Q. State Pattern을 왜 사용했나요?**
+A. 플레이어 상태가 Idle, Walk, Run, Roll, Attack1~3으로 많아지면서 단순 if/else 분기는 복잡도가 기하급수적으로 증가합니다. 각 상태를 독립 클래스로 분리하면 새 상태 추가 시 기존 코드를 수정하지 않아도 되고(OCP), 각 상태의 로직이 명확하게 분리됩니다.
+
+### 오브젝트 풀링
+
+**Q. 풀 크기를 어떻게 결정하나요?**
+A. 화면에 동시에 존재할 수 있는 최대 오브젝트 수를 기준으로 initialSize를 설정합니다. 풀이 비었을 때는 자동 확장(동적 생성)으로 처리하므로 최솟값으로 잡아도 안전합니다.
+
+**Q. DontDestroyOnLoad를 ObjectPoolManager에 적용한 이유는?**
+A. 씬 전환 시 풀이 초기화되면 미리 생성한 오브젝트가 사라져 재생성 비용이 발생합니다. 씬을 넘어서도 풀을 유지해 성능을 유지합니다.
+
+### 싱글톤
+
+**Q. 싱글톤의 단점은 무엇인가요?**
+A. 전역 상태로 인해 의존성이 숨겨지고 테스트하기 어렵습니다. 또한 멀티스레드 환경에서 Race Condition이 발생할 수 있습니다. 이 프로젝트에서는 매니저 클래스처럼 하나만 존재해야 하고 어디서든 접근해야 하는 경우에만 제한적으로 사용했습니다.
+
+### 데이터 설계
+
+**Q. ScriptableObject와 JSON을 어떻게 구분해서 사용했나요?**
+A. 에디터에서 직접 편집하고 에셋으로 관리하는 정적 데이터(몬스터 스탯, 아이템 정보)는 ScriptableObject, 런타임에 생성되거나 계층 구조/참조가 있는 데이터(스킬 트리)와 저장이 필요한 동적 상태(플레이어 진행 상황)는 JSON을 사용했습니다.
+
+### Unity 기초
+
+**Q. Update와 FixedUpdate의 차이는?**
+A. Update는 렌더링 프레임마다 호출되어 호출 빈도가 프레임레이트에 따라 변합니다. FixedUpdate는 물리 시뮬레이션 주기(기본 0.02초)에 맞춰 고정 간격으로 호출됩니다. Rigidbody 조작은 FixedUpdate에서, 입력 처리와 UI는 Update에서 합니다.
+
+**Q. OnEnable/OnDisable에서 이벤트 등록/해제하는 이유는?**
+A. Start에서 AddListener하면 오브젝트가 비활성화됐다 다시 활성화될 때 중복 등록이 발생합니다. OnEnable에서 등록하고 OnDisable에서 제거하면 활성 상태에서만 이벤트를 받고 메모리 누수도 방지합니다.
+
+### 드래그앤드롭
+
+**Q. CanvasGroup.blocksRaycasts를 false로 설정한 이유는?**
+A. 드래그 중인 아이콘이 드롭 대상(퀵슬롯 등)의 Raycast를 가로막으면 IDropHandler.OnDrop()이 호출되지 않습니다. blocksRaycasts = false로 설정하면 드래그 아이콘을 통과해 아래의 드롭 슬롯이 이벤트를 받을 수 있습니다.
+
+---
+
+## 6. 프로젝트 구조
 
 ```
 Assets/Scripts/
-├── Player/           - 플레이어 상태 및 컨트롤러
-├── EnemyScript/      - 적 AI 및 보스 시스템
-├── Inventory/        - 인벤토리 관리
-├── Quest/            - 퀘스트 시스템
-├── Skills/           - 스킬트리 시스템
-├── Shop/             - 상점 시스템
-├── Save/             - 세이브/로드 시스템
-├── QuickSlot/        - 퀵슬롯 시스템
-├── Pool/             - 오브젝트 풀링 시스템
-├── UI/               - 데미지 팝업 등 UI 시스템
-├── SceneManagement/  - 비동기 씬 로딩 시스템
-└── Environment/      - 환경 상호작용
+├── Player/
+│   ├── PlayerMovement.cs       - 캐릭터 컨트롤러, 상태 머신 관리
+│   ├── PlayerProgress.cs       - 레벨, 경험치, 스킬포인트
+│   ├── PlayerSkillCaster.cs    - 스킬 발동 (쿨다운, 이펙트)
+│   ├── PlayerIdleState.cs
+│   ├── PlayerWalkState.cs
+│   ├── PlayerRunState.cs
+│   ├── PlayerRollState.cs
+│   ├── PlayerAttack1State.cs
+│   ├── PlayerAttack2State.cs
+│   └── PlayerAttack3State.cs
+│
+├── EnemyScript/
+│   ├── EnemyAI.cs              - 일반 적 FSM, FOV 감지
+│   ├── BossAI.cs               - 보스 FSM, 페이즈 전환
+│   ├── FuzzyAttack.cs          - 퍼지 로직 공격 선택
+│   ├── FuzzyBossAttack.cs
+│   ├── MonsterDefinition.cs    - 몬스터 ScriptableObject
+│   ├── FireBall.cs             - 발사체 로직
+│   ├── EnemyIdleState.cs
+│   ├── EnemyChaseState.cs
+│   ├── EnemyPatrolState.cs
+│   ├── EnemyAttackState.cs
+│   ├── EnemyReturnState.cs
+│   ├── BossAttackState.cs
+│   └── MonsterSpawnManager.cs
+│
+├── Quest/
+│   ├── QuestData.cs            - 퀘스트 ScriptableObject
+│   ├── QuestManager.cs         - 퀘스트 상태 관리 (Singleton)
+│   ├── QuestGiver.cs           - NPC 상호작용
+│   ├── QuestGate.cs            - 퀘스트 완료 후 문 열기
+│   └── DialogueUI.cs           - 대화창 UI
+│
+├── Inventory/
+│   ├── InventorySystem.cs      - 아이템 저장소
+│   ├── InventoryItemUI.cs      - 아이템 슬롯 UI
+│   ├── InventoryContextMenu.cs - 우클릭 메뉴
+│   ├── DragDrop.cs             - 드래그앤드롭 처리
+│   └── PickableItem.cs         - 씬 아이템 습득
+│
+├── Skills/
+│   ├── SkillDefinition.cs      - 스킬 데이터 구조체
+│   ├── SkillDatabase.cs        - JSON → 딕셔너리 캐싱
+│   ├── SkillTreeSystem.cs      - 습득 로직
+│   ├── SkillUIController.cs    - 스킬창 UI 관리
+│   ├── SkillNodeUI.cs          - 개별 노드 UI, 드래그
+│   └── SkillTooltipPanel.cs    - 마우스 오버 툴팁
+│
+├── QuickSlot/
+│   ├── QuickSlotBar.cs         - 슬롯 바 관리
+│   └── QuickSlot.cs            - 단축키 실행, 드롭 수신
+│
+├── Shop/
+│   ├── ShopKepper.cs           - 상점 NPC
+│   ├── ShopBuyItemUI.cs        - 구매 아이템 UI
+│   ├── ShopSellItemUI.cs       - 판매 아이템 UI
+│   └── GoldManager.cs          - 골드 관리
+│
+├── Pool/
+│   ├── ObjectPoolManager.cs    - 풀 매니저 (Singleton)
+│   ├── PooledObject.cs         - 풀 키 보유 컴포넌트
+│   ├── PooledVFX.cs            - VFX 자동 반환
+│   └── IPoolable.cs            - 초기화 인터페이스
+│
+├── Save/
+│   ├── SaveData.cs             - 저장 데이터 구조
+│   ├── SaveManager.cs          - JSON 직렬화/역직렬화
+│   ├── SavePointTrigger.cs     - 세이브 포인트
+│   └── MonsterSaveData.cs      - 몬스터 동적 상태
+│
+├── UI/
+│   ├── DamagePopup.cs          - 데미지 팝업 애니메이션
+│   ├── DamagePopupManager.cs   - 팝업 풀링 관리
+│   └── DamageType.cs           - 데미지 타입 열거형
+│
+├── Minimap/
+│   ├── MinimapManager.cs       - 미니맵 카메라, 마커 관리
+│   └── MinimapSetup.cs         - 초기 설정 도우미
+│
+├── SceneManagement/
+│   ├── SceneLoadManager.cs     - 비동기 씬 로딩
+│   ├── LoadingScreen.cs        - 로딩 화면 UI
+│   └── LoadingTips.cs          - 랜덤 팁 표시
+│
+├── CameraMovement.cs           - 3인칭 카메라, 락온
+├── StateMachine.cs             - 범용 상태 머신
+├── State.cs                    - 상태 기반 클래스
+├── HealthBar.cs                - HP바 UI (Lerp 애니메이션)
+├── ExpBar.cs                   - 경험치바 UI
+├── StaminaBar.cs               - 스태미나바 UI
+├── WeaponHitPoints.cs          - 무기 판정 포인트
+└── WeaponTrail.cs              - 무기 트레일 렌더러
 ```
 
-## 사용된 디자인 패턴
+---
 
-- **State Pattern**: 플레이어/적 상태 관리
-- **Singleton Pattern**: 게임 매니저 클래스
-- **Observer Pattern**: 이벤트 기반 통신
-- **Strategy Pattern**: 퍼지 로직 공격 선택
-- **Object Pool Pattern**: 오브젝트 재사용으로 GC 부담 감소
-- **Data-Driven Design**: ScriptableObject 기반 몬스터 정의
-
-## 버그 수정 기록
+## 7. 버그 수정 기록
 
 ### FireBall 플레이어 데미지 미적용 버그
 
-**문제**: 보스가 발사한 FireBall이 플레이어에게 충돌해도 데미지가 적용되지 않음
+**증상**: 보스가 발사한 FireBall이 플레이어에게 충돌해도 데미지가 적용되지 않음
 
-**원인**: `ApplyExplosionDamage()` 메서드에서 거리/장애물 체크만 하고 실제 `TakeDamage()` 호출이 누락됨
+**원인**: `ApplyExplosionDamage()` 에서 거리/장애물 체크 후 `TakeDamage()` 호출 누락
+
+```csharp
+// Before - TakeDamage 호출 없음
+if (Physics.Raycast(position, dir.normalized, dist, obstacleMask)) return;
+// 여기서 끝
+
+// After - 데미지 적용 추가
+if (Physics.Raycast(position, dir.normalized, dist, obstacleMask)) return;
+_player.TakeDamage(_damage); // 추가
+```
 
 **파일**: `Assets/Scripts/EnemyScript/FireBall.cs`
-
-**수정 전**:
-```csharp
-private void ApplyExplosionDamage(Vector3 position)
-{
-    if (damagePlayer)
-    {
-        if (_player == null) return;
-
-        Vector3 playerPos = _player.transform.position;
-        Vector3 dir = playerPos - position;
-        float dist = Vector3.Distance(position, playerPos);
-
-        if (dist > explosionRadius) return;
-
-        if (Physics.Raycast(position, dir.normalized, dist, obstacleMask))
-            return;
-
-        // 여기서 끝 - TakeDamage() 호출 없음!
-    }
-    // ...
-}
-```
-
-**수정 후**:
-```csharp
-private void ApplyExplosionDamage(Vector3 position)
-{
-    if (damagePlayer)
-    {
-        if (_player == null) return;
-
-        Vector3 playerPos = _player.transform.position;
-        Vector3 dir = playerPos - position;
-        float dist = Vector3.Distance(position, playerPos);
-
-        if (dist > explosionRadius) return;
-
-        if (Physics.Raycast(position, dir.normalized, dist, obstacleMask))
-            return;
-
-        // 플레이어에게 데미지 적용 (추가됨)
-        _player.TakeDamage(_damage);
-    }
-    // ...
-}
-```
-
-**결과**: 보스 FireBall이 플레이어에게 정상적으로 데미지 적용됨
