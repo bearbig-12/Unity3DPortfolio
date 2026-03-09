@@ -17,18 +17,6 @@ public class SaveManager : MonoBehaviour
 
     private string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.F5))
-        {
-            Save();
-        }
-        if (Input.GetKeyDown(KeyCode.F9))
-        {
-            Load();
-        }
-    }
-
     public void Save(string savePointId = "")
     {
         Stopwatch sw = null;

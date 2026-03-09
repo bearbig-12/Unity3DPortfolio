@@ -90,7 +90,7 @@ public class ShopKepper : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape) && state != ShopState.Closed)
+        if (Input.GetKeyDown(KeyCode.Escape) && state != ShopState.Closed && Time.timeScale > 0f)
         {
             StopInteract();
         }

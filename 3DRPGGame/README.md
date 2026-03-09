@@ -25,9 +25,8 @@ Unity 기반 3D RPG 게임 포트폴리오 프로젝트
    - [카메라 락온 시스템](#211-카메라-락온-시스템)
 3. [사용된 디자인 패턴](#3-사용된-디자인-패턴)
 4. [성능 최적화](#4-성능-최적화)
-5. [면접 대비 Q&A](#5-면접-대비-qa)
-6. [프로젝트 구조](#6-프로젝트-구조)
-7. [버그 수정 기록](#7-버그-수정-기록)
+5. [프로젝트 구조](#5-프로젝트-구조)
+6. [버그 수정 기록](#6-버그-수정-기록)
 
 ---
 
@@ -121,11 +120,6 @@ private void CheckComboInput()
 }
 ```
 
-#### 면접 포인트
-
-> Q: State Pattern 대신 Animator로 상태를 관리할 수도 있는데 왜 코드로 구현했나요?
-> A: Animator는 애니메이션 전환에 특화되어 있고, 게임 로직(데미지 판정 타이밍, 콤보 조건, 무적 프레임 등)은 코드에서 직접 제어하는 것이 더 명확합니다. 두 방식을 혼용해 Animator는 애니메이션만, StateMachine은 로직만 담당하도록 분리했습니다.
-
 ---
 
 ### 2.2 Fuzzy Logic 적 AI
@@ -170,18 +164,13 @@ heavyScore += FuzzyHigh(playerHpRatio);
 return heavyScore >= basicScore ? AttackType.Heavy : AttackType.Basic;
 ```
 
-#### 면접 포인트
-
-> Q: 퍼지 로직을 AI에 적용한 이유가 무엇인가요?
-> A: 일반 조건문은 경계값에서 동작이 급격히 바뀌어 패턴이 예측 가능해집니다. 퍼지 로직은 HP 30% 이하에서도 확률적으로 강공격/약공격을 혼용해 플레이어가 패턴을 쉽게 파악하기 어렵도록 했습니다. 또한 여러 변수(HP, 거리)를 동시에 고려해 상황에 맞는 복합적인 판단이 가능합니다.
-
 ---
 
 ### 2.3 퀘스트 시스템
 
 #### 기능
 
-- **다중 목표 타입**: Kill(처치), RequiredItem(아이템 제출), Arrive(도착)
+- **다중 목표 타입**: Kill(처치), RequiredItem(아이템 제출)
 - **선행 퀘스트 조건**: `prerequisiteQuestId`로 특정 퀘스트 완료 후 해금
 - **퀘스트 순서 관리**: NPC별로 퀘스트 목록을 순서대로 제공
 - **상태 기계**: Available → InProgress → Completed
@@ -192,7 +181,7 @@ return heavyScore >= basicScore ? AttackType.Heavy : AttackType.Basic;
 QuestData (ScriptableObject)
 └── questId, title, description
 └── objectives[] (목표 목록)
-    ├── type: Kill / RequiredItem / Arrive
+    ├── type: Kill / RequiredItem
     ├── targetId, requiredCount
     └── currentCount
 
@@ -219,11 +208,6 @@ QuestGiver (NPC)
     → QuestManager.UpdateKillCount(monsterId)
     → 퀘스트 목표 달성 여부 체크
 ```
-
-#### 면접 포인트
-
-> Q: 퀘스트 데이터를 ScriptableObject로 관리한 이유는?
-> A: 퀘스트 내용(제목, 설명, 목표 수치)은 정적 데이터이므로 ScriptableObject로 에디터에서 설정합니다. 런타임에 변하는 진행 상태(currentCount, status)만 별도로 관리해 데이터와 상태를 분리했습니다. 기획자가 코드 없이 에디터에서 퀘스트를 추가/수정할 수 있습니다.
 
 ---
 
@@ -346,11 +330,6 @@ SkillNodeUI → 색상(잠김/가능/완료), 클릭, 드래그, 툴팁
 PlayerSkillCaster → 실제 스킬 발동 (쿨다운, 이펙트, 애니메이션)
 ```
 
-#### 면접 포인트
-
-> Q: 스킬 데이터를 ScriptableObject가 아닌 JSON으로 관리한 이유는?
-> A: 스킬 트리처럼 계층 구조와 참조(parentId)가 있는 데이터는 JSON이 더 직관적입니다. 또한 JSON은 외부 편집이 용이하고 향후 서버에서 스킬 데이터를 내려받는 구조로 확장하기 쉽습니다.
-
 ---
 
 ### 2.6 상점 시스템
@@ -411,11 +390,6 @@ public interface IPoolable
 | Destroy 호출 | 100 | **0** | -100% |
 | 메모리 사용량 | 19,904 KB | **8,424 KB** | **-57%** |
 
-#### 면접 포인트
-
-> Q: 풀이 비었을 때 처리 방법은?
-> A: `Get()`에서 큐가 비어 있으면 새 오브젝트를 동적으로 생성해 반환합니다(자동 확장). 이렇게 하면 initialSize를 정확하게 예측하지 않아도 되고, 최악의 경우에도 동작이 보장됩니다.
-
 ---
 
 ### 2.8 Save / Load 시스템
@@ -449,11 +423,6 @@ SaveData
 #### 세이브 포인트
 
 씬에 배치된 `SavePointTrigger`에 진입 시 자동 저장. `SaveManager.Save()` → JSON → `Application.persistentDataPath`.
-
-#### 면접 포인트
-
-> Q: JSON 저장 시 보안 처리는?
-> A: 이 프로젝트는 싱글 플레이어 오프라인이므로 별도 암호화는 적용하지 않았습니다. 온라인 게임이라면 서버에서 검증하거나, 로컬 저장 시 AES 암호화 또는 해시 체크섬을 추가하는 방법을 사용할 것입니다.
 
 ---
 
@@ -635,47 +604,7 @@ void Update()
 
 ---
 
-## 5. 면접 대비 Q&A
-
-### State Pattern
-
-**Q. State Pattern을 왜 사용했나요?**
-A. 플레이어 상태가 Idle, Walk, Run, Roll, Attack1~3으로 많아지면서 단순 if/else 분기는 복잡도가 기하급수적으로 증가합니다. 각 상태를 독립 클래스로 분리하면 새 상태 추가 시 기존 코드를 수정하지 않아도 되고(OCP), 각 상태의 로직이 명확하게 분리됩니다.
-
-### 오브젝트 풀링
-
-**Q. 풀 크기를 어떻게 결정하나요?**
-A. 화면에 동시에 존재할 수 있는 최대 오브젝트 수를 기준으로 initialSize를 설정합니다. 풀이 비었을 때는 자동 확장(동적 생성)으로 처리하므로 최솟값으로 잡아도 안전합니다.
-
-**Q. DontDestroyOnLoad를 ObjectPoolManager에 적용한 이유는?**
-A. 씬 전환 시 풀이 초기화되면 미리 생성한 오브젝트가 사라져 재생성 비용이 발생합니다. 씬을 넘어서도 풀을 유지해 성능을 유지합니다.
-
-### 싱글톤
-
-**Q. 싱글톤의 단점은 무엇인가요?**
-A. 전역 상태로 인해 의존성이 숨겨지고 테스트하기 어렵습니다. 또한 멀티스레드 환경에서 Race Condition이 발생할 수 있습니다. 이 프로젝트에서는 매니저 클래스처럼 하나만 존재해야 하고 어디서든 접근해야 하는 경우에만 제한적으로 사용했습니다.
-
-### 데이터 설계
-
-**Q. ScriptableObject와 JSON을 어떻게 구분해서 사용했나요?**
-A. 에디터에서 직접 편집하고 에셋으로 관리하는 정적 데이터(몬스터 스탯, 아이템 정보)는 ScriptableObject, 런타임에 생성되거나 계층 구조/참조가 있는 데이터(스킬 트리)와 저장이 필요한 동적 상태(플레이어 진행 상황)는 JSON을 사용했습니다.
-
-### Unity 기초
-
-**Q. Update와 FixedUpdate의 차이는?**
-A. Update는 렌더링 프레임마다 호출되어 호출 빈도가 프레임레이트에 따라 변합니다. FixedUpdate는 물리 시뮬레이션 주기(기본 0.02초)에 맞춰 고정 간격으로 호출됩니다. Rigidbody 조작은 FixedUpdate에서, 입력 처리와 UI는 Update에서 합니다.
-
-**Q. OnEnable/OnDisable에서 이벤트 등록/해제하는 이유는?**
-A. Start에서 AddListener하면 오브젝트가 비활성화됐다 다시 활성화될 때 중복 등록이 발생합니다. OnEnable에서 등록하고 OnDisable에서 제거하면 활성 상태에서만 이벤트를 받고 메모리 누수도 방지합니다.
-
-### 드래그앤드롭
-
-**Q. CanvasGroup.blocksRaycasts를 false로 설정한 이유는?**
-A. 드래그 중인 아이콘이 드롭 대상(퀵슬롯 등)의 Raycast를 가로막으면 IDropHandler.OnDrop()이 호출되지 않습니다. blocksRaycasts = false로 설정하면 드래그 아이콘을 통과해 아래의 드롭 슬롯이 이벤트를 받을 수 있습니다.
-
----
-
-## 6. 프로젝트 구조
+## 5. 프로젝트 구조
 
 ```
 Assets/Scripts/
@@ -759,11 +688,6 @@ Assets/Scripts/
 │   ├── MinimapManager.cs       - 미니맵 카메라, 마커 관리
 │   └── MinimapSetup.cs         - 초기 설정 도우미
 │
-├── SceneManagement/
-│   ├── SceneLoadManager.cs     - 비동기 씬 로딩
-│   ├── LoadingScreen.cs        - 로딩 화면 UI
-│   └── LoadingTips.cs          - 랜덤 팁 표시
-│
 ├── CameraMovement.cs           - 3인칭 카메라, 락온
 ├── StateMachine.cs             - 범용 상태 머신
 ├── State.cs                    - 상태 기반 클래스
@@ -776,7 +700,7 @@ Assets/Scripts/
 
 ---
 
-## 7. 버그 수정 기록
+## 6. 버그 수정 기록
 
 ### FireBall 플레이어 데미지 미적용 버그
 

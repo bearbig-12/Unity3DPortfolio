@@ -243,7 +243,7 @@ public class EnemyAI : MonoBehaviour
         return attackRange;
     }
 
-    public void TakeDamage(int damage)
+    public virtual void TakeDamage(int damage)
     {
         if (isDead)
             return;

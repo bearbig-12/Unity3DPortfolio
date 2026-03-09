@@ -24,6 +24,8 @@ public class MinimapManager : MonoBehaviour
     [Header("Marker Settings")]
     [SerializeField] private float markerHeight = 45f;
     [SerializeField] private float markerScale = 2f;
+    [SerializeField] private float enemyMarkerScale = 3f;
+    [SerializeField] private float npcMarkerScale = 3f;
 
     private float _currentZoom;
     private GameObject _playerMarker;
@@ -238,7 +240,7 @@ public class MinimapManager : MonoBehaviour
         marker.transform.SetParent(target);
         marker.transform.localPosition = new Vector3(0f, markerHeight, 0f);
         SetMarkerLayer(marker);
-        marker.transform.localScale = Vector3.one * markerScale * 0.8f;
+        marker.transform.localScale = Vector3.one * enemyMarkerScale;
         _enemyMarkers[target] = marker;
     }
 
@@ -248,7 +250,7 @@ public class MinimapManager : MonoBehaviour
         marker.transform.SetParent(target);
         marker.transform.localPosition = new Vector3(0f, markerHeight, 0f);
         SetMarkerLayer(marker);
-        marker.transform.localScale = Vector3.one * markerScale * 0.8f;
+        marker.transform.localScale = Vector3.one * npcMarkerScale;
         _npcMarkers[target] = marker;
     }
 

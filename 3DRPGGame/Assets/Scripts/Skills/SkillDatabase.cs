@@ -38,7 +38,7 @@ public class SkillDatabase : MonoBehaviour
         }
     }
 
-    // 스킬나무 안에서 특정 스킬 찾아오기
+    // 스킬트리 안에서 특정 스킬 찾아오기
     public SkillDefinition Get(string id)
     {
         if(_skills.TryGetValue(id, out var skill))

@@ -44,7 +44,7 @@ public class SkillUIController : MonoBehaviour
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.K)) Toggle();
-        if (Input.GetKeyDown(KeyCode.Escape) && IsOpen()) Close();
+        if (Input.GetKeyDown(KeyCode.Escape) && IsOpen() && !SettingsMenuManager.IsPaused) Close();
     }
 
     public void Toggle()

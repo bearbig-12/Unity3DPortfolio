@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   monsterId: boss
   monsterName: BossMonster
-  maxHealth: 100
+  maxHealth: 300
   basicAttackDamage: 5
   hardAttackDamage: 10
   attackCooldown: 1
@@ -31,7 +31,7 @@ MonoBehaviour:
   healthBarOffset: {x: 0, y: 2.5, z: 0}
   phase2HealthRatio: 0.5
   meleeRange: 2.5
-  rangedRange: 10
+  rangedRange: 20
   aoeRange: 6
   meleeCooldown: 2
   rangedCooldown: 3

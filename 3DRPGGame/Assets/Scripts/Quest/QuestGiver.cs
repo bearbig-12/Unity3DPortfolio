@@ -8,14 +8,6 @@ public class QuestGiver : MonoBehaviour
 
     private bool _playerInRange;
 
-    private void Update()
-    {
-        if (_playerInRange && Input.GetKeyDown(KeyCode.E))
-        {
-            Interact();
-        }
-    }
-
     public void Interact()
     {
         if (QuestManager.Instance == null || dialogue == null) return;

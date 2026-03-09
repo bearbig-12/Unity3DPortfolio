@@ -38,6 +38,8 @@ public class BossAI : EnemyAI
 
     public BossPhase CurrentPhase { get; private set; } = BossPhase.Phase1;
 
+    private bool _isPhaseChanging = false;
+
     [Header("Boss Hitboxes")]
     public EnemyDamageHitbox[] meleeHitboxes;
     public BossAoeHitbox aoeHitbox;
@@ -72,8 +74,26 @@ public class BossAI : EnemyAI
         AttackState = new BossAttackState(this);
         _rangedFireHandEffect = fireHandEffect.GetComponent<ParticleSystem>();
         _rangedFireHandEffect.Stop();
-
     }
+
+    protected override void Update()
+    {
+        if (_isPhaseChanging)
+        {
+            _agent.isStopped = true;
+            _animator.SetBool("IsWalking", false);
+            _animator.SetBool("IsRunning", false);
+            return;
+        }
+        base.Update();
+    }
+
+    public override void TakeDamage(int damage)
+    {
+        if (_isPhaseChanging) return;
+        base.TakeDamage(damage);
+    }
+
     protected override void OnDamaged(int damage)
     {
         float phase2Threshold = maxHealth * phase2HealthRatio;
@@ -92,10 +112,25 @@ public class BossAI : EnemyAI
 
     public void OnPhaseChanged()
     {
+        _isPhaseChanging = true;
+        _animator.SetBool("IsPhaseChanging", true);
+
+        // 진행 중인 공격 트리거 초기화
+        if (!string.IsNullOrEmpty(meleeTrigger)) _animator.ResetTrigger(meleeTrigger);
+        if (!string.IsNullOrEmpty(rangedTrigger)) _animator.ResetTrigger(rangedTrigger);
+        if (!string.IsNullOrEmpty(aoeTrigger)) _animator.ResetTrigger(aoeTrigger);
+
         if (!string.IsNullOrEmpty(phase2Trigger))
         {
-            //_animator.SetTrigger(phase2Trigger);
+            _animator.SetTrigger(phase2Trigger);
         }
+    }
+
+    // BossPhase2 애니메이션 마지막 프레임에 Animation Event로 호출
+    public void AnimEvent_PhaseChangeEnd()
+    {
+        _isPhaseChanging = false;
+        _animator.SetBool("IsPhaseChanging", false);
     }
 
     public bool IsAttackReady(BossAttackType type)
@@ -107,7 +142,7 @@ public class BossAI : EnemyAI
         if (type == BossAttackType.Ranged)
         {
             return Time.time >= _nextRangedTime;
-        } 
+        }
         return Time.time >= _nextAoeTime;
     }
 
@@ -197,11 +232,11 @@ public class BossAI : EnemyAI
         {
             SetHitboxes(meleeHitboxes, active);
         }
-       
+
         else
         {
             SetHitbox(aoeHitbox, active);
-        } 
+        }
 
         if (set == null) return;
 
